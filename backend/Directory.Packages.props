@@ -21,6 +21,7 @@
     <!-- Messaging -->
     <PackageVersion Include="MassTransit" Version="8.4.0" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.4.0" />
+    <PackageVersion Include="MassTransit.EntityFrameworkCore" Version="8.4.0" />
 
     <!-- MediatR & CQRS -->
     <PackageVersion Include="MediatR" Version="12.5.0" />

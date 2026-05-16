@@ -31,12 +31,15 @@ public class Program
         builder.Services.AddDbContext<OrderDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+        builder.Services.AddDbContext<OrderSagaDbContext>(options =>
+            options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
         builder.Services.AddMassTransit(x =>
         {
             x.AddSagaStateMachine<OrderPlacementStateMachine, OrderPlacementState>()
-                .InMemoryRepository();
+                .EntityFrameworkRepository(r => r.ExistingDbContext<OrderSagaDbContext>());
             x.AddSagaStateMachine<OrderCancellationStateMachine, OrderCancellationState>()
-                .InMemoryRepository();
+                .EntityFrameworkRepository(r => r.ExistingDbContext<OrderSagaDbContext>());
 
             x.UsingRabbitMq((context, cfg) =>
             {

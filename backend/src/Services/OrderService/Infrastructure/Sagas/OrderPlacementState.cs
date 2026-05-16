@@ -5,7 +5,7 @@ namespace OrderService.Infrastructure.Sagas;
 /// <summary>
 /// Saga state instance for the order placement flow.
 /// </summary>
-public class OrderPlacementState : SagaStateMachineInstance
+public class OrderPlacementState : SagaStateMachineInstance, ISagaVersion
 {
     /// <summary>
     /// Gets or sets the saga correlation identifier.
@@ -35,5 +35,5 @@ public class OrderPlacementState : SagaStateMachineInstance
     /// <summary>
     /// Gets or sets the row version for optimistic concurrency.
     /// </summary>
-    public byte[]? RowVersion { get; set; }
+    public int Version { get; set; }
 }

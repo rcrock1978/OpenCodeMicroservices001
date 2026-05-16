@@ -5,7 +5,7 @@ namespace OrderService.Infrastructure.Sagas;
 /// <summary>
 /// Saga state instance for the order cancellation flow.
 /// </summary>
-public class OrderCancellationState : SagaStateMachineInstance
+public class OrderCancellationState : SagaStateMachineInstance, ISagaVersion
 {
     /// <summary>
     /// Gets or sets the saga correlation identifier.
@@ -35,5 +35,5 @@ public class OrderCancellationState : SagaStateMachineInstance
     /// <summary>
     /// Gets or sets the row version for optimistic concurrency.
     /// </summary>
-    public byte[]? RowVersion { get; set; }
+    public int Version { get; set; }
 }
