@@ -29,6 +29,11 @@ public interface IEvent
     /// Gets the version of the event schema.
     /// </summary>
     string EventVersion { get; }
+
+    /// <summary>
+    /// Gets the tenant identifier associated with the event.
+    /// </summary>
+    Guid TenantId { get; }
 }
 
 /// <summary>
@@ -48,7 +53,7 @@ public interface IEventBus
 /// <summary>
 /// Base implementation for integration events.
 /// </summary>
-public abstract class IntegrationEvent : IEvent
+public abstract record IntegrationEvent : IEvent
 {
     /// <inheritdoc />
     public Guid EventId { get; init; } = Guid.NewGuid();
@@ -64,4 +69,7 @@ public abstract class IntegrationEvent : IEvent
 
     /// <inheritdoc />
     public virtual string EventVersion => "1.0";
+
+    /// <inheritdoc />
+    public Guid TenantId { get; init; }
 }

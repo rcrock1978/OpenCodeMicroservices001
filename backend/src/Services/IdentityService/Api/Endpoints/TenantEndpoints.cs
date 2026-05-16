@@ -1,6 +1,8 @@
+using MassTransit;
 using IdentityService.Domain.Entities;
 using IdentityService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace IdentityService.Api.Endpoints;
 
@@ -24,7 +26,7 @@ public static class TenantEndpoints
                 ? Results.Ok(tenant)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateTenantRequest request, IdentityDbContext db) =>
+        group.MapPost("/", async (CreateTenantRequest request, IdentityDbContext db, IPublishEndpoint publishEndpoint) =>
         {
             var tenant = new Tenant
             {
@@ -35,6 +37,15 @@ public static class TenantEndpoints
             };
             db.Tenants.Add(tenant);
             await db.SaveChangesAsync();
+
+            await publishEndpoint.Publish(new TenantCreatedIntegrationEvent
+            {
+                TenantId = tenant.Id,
+                Name = tenant.Name,
+                Slug = tenant.Subdomain,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
             return Results.Created($"/api/tenants/{tenant.Id}", tenant);
         });
 

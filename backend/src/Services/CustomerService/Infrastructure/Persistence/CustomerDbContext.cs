@@ -23,11 +23,17 @@ public class CustomerDbContext : DbContext
     /// </summary>
     public DbSet<Address> Addresses => Set<Address>();
 
+    /// <summary>
+    /// Gets or sets the order summaries DbSet.
+    /// </summary>
+    public DbSet<OrderSummary> OrderSummaries => Set<OrderSummary>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new CustomerConfiguration());
         modelBuilder.ApplyConfiguration(new AddressConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderSummaryConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

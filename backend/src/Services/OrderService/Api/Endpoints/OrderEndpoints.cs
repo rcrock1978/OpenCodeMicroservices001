@@ -1,6 +1,8 @@
+using MassTransit;
 using OrderService.Domain.Entities;
 using OrderService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace OrderService.Api.Endpoints;
 
@@ -30,7 +32,7 @@ public static class OrderEndpoints
                 ? Results.Ok(order)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateOrderRequest request, OrderDbContext db) =>
+        group.MapPost("/", async (CreateOrderRequest request, OrderDbContext db, IPublishEndpoint publishEndpoint) =>
         {
             var order = new Order
             {
@@ -64,10 +66,26 @@ public static class OrderEndpoints
 
             db.Orders.Add(order);
             await db.SaveChangesAsync();
+
+            await publishEndpoint.Publish(new OrderPlacedIntegrationEvent
+            {
+                OrderId = order.Id,
+                TenantId = order.TenantId,
+                CustomerId = order.CustomerId,
+                TotalAmount = order.Total,
+                Items = order.Items.Select(i => new OrderItemDto(
+                    i.ProductId,
+                    i.ProductVariantId,
+                    i.ProductName,
+                    i.Sku,
+                    i.UnitPrice,
+                    i.Quantity)).ToList()
+            });
+
             return Results.Created($"/api/orders/{order.Id}", order);
         });
 
-        group.MapPost("/{id:guid}/cancel", async (Guid id, OrderDbContext db) =>
+        group.MapPost("/{id:guid}/cancel", async (Guid id, OrderDbContext db, IPublishEndpoint publishEndpoint) =>
         {
             var order = await db.Orders.FindAsync(id);
             if (order is null) return Results.NotFound();
@@ -76,6 +94,14 @@ public static class OrderEndpoints
 
             order.Status = OrderStatus.Cancelled;
             await db.SaveChangesAsync();
+
+            await publishEndpoint.Publish(new OrderCancelledIntegrationEvent
+            {
+                OrderId = order.Id,
+                TenantId = order.TenantId,
+                Reason = "Customer requested cancellation"
+            });
+
             return Results.Ok(order);
         });
 

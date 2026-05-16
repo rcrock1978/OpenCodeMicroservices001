@@ -1,6 +1,8 @@
+using MassTransit;
 using CatalogService.Domain.Entities;
 using CatalogService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace CatalogService.Api.Endpoints;
 
@@ -34,7 +36,7 @@ public static class ProductEndpoints
                 ? Results.Ok(product)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateProductRequest request, CatalogDbContext db) =>
+        group.MapPost("/", async (CreateProductRequest request, CatalogDbContext db, IPublishEndpoint publishEndpoint) =>
         {
             var product = new Product
             {
@@ -51,6 +53,17 @@ public static class ProductEndpoints
             };
             db.Products.Add(product);
             await db.SaveChangesAsync();
+
+            await publishEndpoint.Publish(new ProductCreatedIntegrationEvent
+            {
+                ProductId = product.Id,
+                TenantId = product.TenantId,
+                Name = product.Name,
+                Sku = product.Sku,
+                Price = product.BasePrice,
+                CreatedAt = DateTimeOffset.UtcNow
+            });
+
             return Results.Created($"/api/products/{product.Id}", product);
         });
 

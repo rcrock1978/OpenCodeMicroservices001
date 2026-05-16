@@ -54,6 +54,26 @@ public static class NotificationEndpoints
             return Results.Ok(notification);
         });
 
+        group.MapGet("/templates", async (NotificationDbContext db) =>
+            Results.Ok(await db.Templates.AsNoTracking().ToListAsync()));
+
+        group.MapPost("/templates", async (CreateTemplateRequest request, NotificationDbContext db) =>
+        {
+            var template = new Template
+            {
+                Id = Guid.NewGuid(),
+                TenantId = request.TenantId,
+                Key = request.Key,
+                Subject = request.Subject,
+                BodyHtml = request.BodyHtml,
+                BodyText = request.BodyText,
+                Channel = request.Channel
+            };
+            db.Templates.Add(template);
+            await db.SaveChangesAsync();
+            return Results.Created($"/api/notifications/templates/{template.Id}", template);
+        });
+
         return app;
     }
 }
@@ -62,3 +82,8 @@ public static class NotificationEndpoints
 /// Request model for creating a notification.
 /// </summary>
 public record CreateNotificationRequest(Guid TenantId, string RecipientEmail, string Subject, string Body, NotificationType Type);
+
+/// <summary>
+/// Request model for creating a template.
+/// </summary>
+public record CreateTemplateRequest(Guid TenantId, string Key, string Subject, string? BodyHtml, string? BodyText, NotificationChannel Channel);

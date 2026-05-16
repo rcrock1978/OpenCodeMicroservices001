@@ -1,5 +1,7 @@
 using NotificationService.Api.Endpoints;
+using NotificationService.Infrastructure.Consumers;
 using NotificationService.Infrastructure.Persistence;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
@@ -28,6 +30,23 @@ public class Program
 
         builder.Services.AddDbContext<NotificationDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddMassTransit(x =>
+        {
+            x.AddConsumer<OrderPlacedNotificationConsumer>();
+            x.AddConsumer<OrderCancelledNotificationConsumer>();
+            x.AddConsumer<CustomerCreatedNotificationConsumer>();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(builder.Configuration["RabbitMq:Host"]!, "/", h =>
+                {
+                    h.Username(builder.Configuration["RabbitMq:Username"]!);
+                    h.Password(builder.Configuration["RabbitMq:Password"]!);
+                });
+                cfg.ConfigureEndpoints(context);
+            });
+        });
 
         builder.Services.AddOpenApi();
 

@@ -20,7 +20,7 @@ public static class HealthCheckExtensions
     public static IServiceCollection AddStandardHealthChecks(this IServiceCollection services, string serviceName)
     {
         services.AddHealthChecks()
-            .AddCheck($"{serviceName}-self", () => HealthCheckResult.Healthy(), tags: ["live"]);
+            .AddCheck($"{serviceName}-self", () => HealthCheckResult.Healthy(), tags: ["live", "ready"]);
 
         return services;
     }

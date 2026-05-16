@@ -1,5 +1,7 @@
 using CustomerService.Api.Endpoints;
+using CustomerService.Infrastructure.Consumers;
 using CustomerService.Infrastructure.Persistence;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
@@ -28,6 +30,22 @@ public class Program
 
         builder.Services.AddDbContext<CustomerDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddMassTransit(x =>
+        {
+            x.AddConsumer<OrderPlacedEventConsumer>();
+            x.AddConsumer<OrderPaidEventConsumer>();
+
+            x.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(builder.Configuration["RabbitMq:Host"]!, "/", h =>
+                {
+                    h.Username(builder.Configuration["RabbitMq:Username"]!);
+                    h.Password(builder.Configuration["RabbitMq:Password"]!);
+                });
+                cfg.ConfigureEndpoints(context);
+            });
+        });
 
         builder.Services.AddOpenApi();
 

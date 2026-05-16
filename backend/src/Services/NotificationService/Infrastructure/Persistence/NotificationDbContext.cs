@@ -18,10 +18,16 @@ public class NotificationDbContext : DbContext
     /// </summary>
     public DbSet<Notification> Notifications => Set<Notification>();
 
+    /// <summary>
+    /// Gets or sets the templates DbSet.
+    /// </summary>
+    public DbSet<Template> Templates => Set<Template>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+        modelBuilder.ApplyConfiguration(new TemplateConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

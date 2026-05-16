@@ -23,11 +23,17 @@ public class PaymentDbContext : DbContext
     /// </summary>
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
 
+    /// <summary>
+    /// Gets or sets the payment transactions DbSet.
+    /// </summary>
+    public DbSet<PaymentTransaction> PaymentTransactions => Set<PaymentTransaction>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new PaymentIntentConfiguration());
         modelBuilder.ApplyConfiguration(new PaymentMethodConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentTransactionConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

@@ -28,12 +28,18 @@ public class CatalogDbContext : DbContext
     /// </summary>
     public DbSet<Category> Categories => Set<Category>();
 
+    /// <summary>
+    /// Gets or sets the media assets DbSet.
+    /// </summary>
+    public DbSet<MediaAsset> MediaAssets => Set<MediaAsset>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        modelBuilder.ApplyConfiguration(new MediaAssetConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

@@ -23,11 +23,17 @@ public class OrderDbContext : DbContext
     /// </summary>
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
 
+    /// <summary>
+    /// Gets or sets the order status histories DbSet.
+    /// </summary>
+    public DbSet<OrderStatusHistory> OrderStatusHistories => Set<OrderStatusHistory>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
+        modelBuilder.ApplyConfiguration(new OrderStatusHistoryConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

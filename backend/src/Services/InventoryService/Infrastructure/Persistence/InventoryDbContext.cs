@@ -23,11 +23,17 @@ public class InventoryDbContext : DbContext
     /// </summary>
     public DbSet<StockReservation> StockReservations => Set<StockReservation>();
 
+    /// <summary>
+    /// Gets or sets the stock movements DbSet.
+    /// </summary>
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
     /// <inheritdoc />
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfiguration(new StockItemConfiguration());
         modelBuilder.ApplyConfiguration(new StockReservationConfiguration());
+        modelBuilder.ApplyConfiguration(new StockMovementConfiguration());
         base.OnModelCreating(modelBuilder);
     }
 }

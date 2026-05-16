@@ -1,6 +1,8 @@
+using MassTransit;
 using CustomerService.Domain.Entities;
 using CustomerService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace CustomerService.Api.Endpoints;
 
@@ -30,7 +32,7 @@ public static class CustomerEndpoints
                 ? Results.Ok(customer)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateCustomerRequest request, CustomerDbContext db) =>
+        group.MapPost("/", async (CreateCustomerRequest request, CustomerDbContext db, IPublishEndpoint publishEndpoint) =>
         {
             var customer = new Customer
             {
@@ -44,6 +46,15 @@ public static class CustomerEndpoints
             };
             db.Customers.Add(customer);
             await db.SaveChangesAsync();
+
+            await publishEndpoint.Publish(new CustomerCreatedIntegrationEvent
+            {
+                CustomerId = customer.Id,
+                TenantId = customer.TenantId,
+                Email = customer.Email,
+                FullName = $"{customer.FirstName} {customer.LastName}"
+            });
+
             return Results.Created($"/api/customers/{customer.Id}", customer);
         });
 
