@@ -3,12 +3,14 @@ using IdentityService.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
+using Scalar.AspNetCore;
+using Serilog;
 
 namespace IdentityService;
 
 /// <summary>
 /// Entry point for the Identity Service.
-/// Manages users, tenants, authentication, and authorization.
+/// Manages merchant and customer identities, tenant isolation, and stub JWT issuance.
 /// </summary>
 public class Program
 {
@@ -17,7 +19,12 @@ public class Program
     /// </summary>
     public static void Main(string[] args)
     {
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         var builder = WebApplication.CreateBuilder(args);
+        builder.Host.UseSerilog();
 
         builder.Services.AddDbContext<IdentityDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -41,6 +48,10 @@ public class Program
                        .AddHttpClientInstrumentation()
                        .AddEntityFrameworkCoreInstrumentation()
                        .AddOtlpExporter();
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics.AddRuntimeInstrumentation();
             });
 
         var app = builder.Build();
@@ -50,7 +61,8 @@ public class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseOpenApi();
+        app.MapOpenApi();
+        app.MapScalarApiReference();
 
         app.UseStandardHealthChecks();
 
@@ -59,12 +71,6 @@ public class Program
         app.MapUserEndpoints();
 
         app.MapGet("/", () => Results.Ok(new { service = "IdentityService", status = "running" }));
-
-        using (var scope = app.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
-            db.Database.Migrate();
-        }
 
         app.Run();
     }

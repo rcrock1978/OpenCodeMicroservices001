@@ -1,14 +1,16 @@
-using Microsoft.EntityFrameworkCore;
 using NotificationService.Api.Endpoints;
 using NotificationService.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
+using Scalar.AspNetCore;
+using Serilog;
 
 namespace NotificationService;
 
 /// <summary>
 /// Entry point for the Notification Service.
-/// Manages email templates, notifications, and webhook deliveries.
+/// Consumes domain events and dispatches email/SMS/webhook notifications.
 /// </summary>
 public class Program
 {
@@ -17,7 +19,12 @@ public class Program
     /// </summary>
     public static void Main(string[] args)
     {
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         var builder = WebApplication.CreateBuilder(args);
+        builder.Host.UseSerilog();
 
         builder.Services.AddDbContext<NotificationDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -33,25 +40,24 @@ public class Program
                        .AddHttpClientInstrumentation()
                        .AddEntityFrameworkCoreInstrumentation()
                        .AddOtlpExporter();
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics.AddRuntimeInstrumentation();
             });
 
         var app = builder.Build();
 
         app.UseMiddleware<CorrelationIdMiddleware>();
 
-        app.UseOpenApi();
+        app.MapOpenApi();
+        app.MapScalarApiReference();
 
         app.UseStandardHealthChecks();
 
         app.MapNotificationEndpoints();
 
         app.MapGet("/", () => Results.Ok(new { service = "NotificationService", status = "running" }));
-
-        using (var scope = app.Services.CreateScope())
-        {
-            var db = scope.ServiceProvider.GetRequiredService<NotificationDbContext>();
-            db.Database.Migrate();
-        }
 
         app.Run();
     }

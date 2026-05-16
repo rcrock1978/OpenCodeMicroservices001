@@ -1,4 +1,6 @@
 using SaaSCommon.Middleware;
+using Scalar.AspNetCore;
+using Serilog;
 
 namespace Gateway;
 
@@ -12,7 +14,12 @@ public class Program
     /// </summary>
     public static void Main(string[] args)
     {
+        Log.Logger = new LoggerConfiguration()
+            .WriteTo.Console()
+            .CreateLogger();
+
         var builder = WebApplication.CreateBuilder(args);
+        builder.Host.UseSerilog();
 
         builder.Services.AddReverseProxy()
             .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
@@ -25,13 +32,18 @@ public class Program
                 tracing.AddAspNetCoreInstrumentation()
                        .AddHttpClientInstrumentation()
                        .AddOtlpExporter();
+            })
+            .WithMetrics(metrics =>
+            {
+                metrics.AddRuntimeInstrumentation();
             });
 
         var app = builder.Build();
 
         app.UseMiddleware<CorrelationIdMiddleware>();
 
-        app.UseOpenApi();
+        app.MapOpenApi();
+        app.MapScalarApiReference();
 
         app.MapReverseProxy();
 

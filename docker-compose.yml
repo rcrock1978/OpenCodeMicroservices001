@@ -89,15 +89,21 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - IDENTITY_SERVICE_URL=http://identityservice:8080
-      - BILLING_SERVICE_URL=http://billingservice:8080
+      - CATALOG_SERVICE_URL=http://catalogservice:8080
+      - INVENTORY_SERVICE_URL=http://inventoryservice:8080
+      - ORDER_SERVICE_URL=http://orderservice:8080
+      - CUSTOMER_SERVICE_URL=http://customerservice:8080
+      - PAYMENT_SERVICE_URL=http://paymentservice:8080
       - NOTIFICATION_SERVICE_URL=http://notificationservice:8080
-      - CORE_SERVICE_URL=http://coreservice:8080
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       - identityservice
-      - billingservice
+      - catalogservice
+      - inventoryservice
+      - orderservice
+      - customerservice
+      - paymentservice
       - notificationservice
-      - coreservice
 
   identityservice:
     build:
@@ -121,17 +127,17 @@ services:
       rabbitmq:
         condition: service_healthy
 
-  billingservice:
+  catalogservice:
     build:
       context: ./backend
-      dockerfile: src/Services/BillingService/Dockerfile
-    container_name: saas-billingservice
+      dockerfile: src/Services/CatalogService/Dockerfile
+    container_name: saas-catalogservice
     ports:
       - "5002:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=billing_db;Username=saas_admin;Password=saas_password
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=catalog_db;Username=saas_admin;Password=saas_password
       - ConnectionStrings__Redis=redis:6379
       - RabbitMq__Host=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
@@ -139,6 +145,82 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  inventoryservice:
+    build:
+      context: ./backend
+      dockerfile: src/Services/InventoryService/Dockerfile
+    container_name: saas-inventoryservice
+    ports:
+      - "5003:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=inventory_db;Username=saas_admin;Password=saas_password
+      - RabbitMq__Host=rabbitmq
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  orderservice:
+    build:
+      context: ./backend
+      dockerfile: src/Services/OrderService/Dockerfile
+    container_name: saas-orderservice
+    ports:
+      - "5004:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=order_db;Username=saas_admin;Password=saas_password
+      - RabbitMq__Host=rabbitmq
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  customerservice:
+    build:
+      context: ./backend
+      dockerfile: src/Services/CustomerService/Dockerfile
+    container_name: saas-customerservice
+    ports:
+      - "5005:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=customer_db;Username=saas_admin;Password=saas_password
+      - RabbitMq__Host=rabbitmq
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  paymentservice:
+    build:
+      context: ./backend
+      dockerfile: src/Services/PaymentService/Dockerfile
+    container_name: saas-paymentservice
+    ports:
+      - "5006:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=payment_db;Username=saas_admin;Password=saas_password
+      - RabbitMq__Host=rabbitmq
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
+    depends_on:
+      postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -149,40 +231,15 @@ services:
       dockerfile: src/Services/NotificationService/Dockerfile
     container_name: saas-notificationservice
     ports:
-      - "5003:8080"
+      - "5007:8080"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=notification_db;Username=saas_admin;Password=saas_password
-      - ConnectionStrings__Redis=redis:6379
       - RabbitMq__Host=rabbitmq
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-
-  coreservice:
-    build:
-      context: ./backend
-      dockerfile: src/Services/CoreService/Dockerfile
-    container_name: saas-coreservice
-    ports:
-      - "5004:8080"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://+:8080
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=core_db;Username=saas_admin;Password=saas_password
-      - ConnectionStrings__Redis=redis:6379
-      - RabbitMq__Host=rabbitmq
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://jaeger:4317
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
