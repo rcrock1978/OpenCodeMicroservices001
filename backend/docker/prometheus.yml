@@ -1,0 +1,33 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:8080']
+    metrics_path: /metrics
+
+  - job_name: 'identityservice'
+    static_configs:
+      - targets: ['identityservice:8080']
+    metrics_path: /metrics
+
+  - job_name: 'billingservice'
+    static_configs:
+      - targets: ['billingservice:8080']
+    metrics_path: /metrics
+
+  - job_name: 'notificationservice'
+    static_configs:
+      - targets: ['notificationservice:8080']
+    metrics_path: /metrics
+
+  - job_name: 'coreservice'
+    static_configs:
+      - targets: ['coreservice:8080']
+    metrics_path: /metrics

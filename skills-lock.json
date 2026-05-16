@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "skills": {
+    "ai-sdk": {
+      "source": "vercel/ai",
+      "sourceType": "github",
+      "skillPath": "skills/use-ai-sdk/SKILL.md",
+      "computedHash": "2249889eb47ef0f61c4dba4cf2afe01c1c8dd793bb4c24230347c1ab909bb7dd"
+    },
+    "aspnet-minimal-api-openapi": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/aspnet-minimal-api-openapi/SKILL.md",
+      "computedHash": "2c4b990eba7b246b17c043a60b85f0910a98ce5e8aad13b92e34c260fdf23d4b"
+    },
+    "dotnet-best-practices": {
+      "source": "github/awesome-copilot",
+      "sourceType": "github",
+      "skillPath": "skills/dotnet-best-practices/SKILL.md",
+      "computedHash": "9ef94db7f06c167d544369817e5a4415eeb7886dcff0d47026837a1aada260e3"
+    },
+    "find-skills": {
+      "source": "vercel-labs/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-skills/SKILL.md",
+      "computedHash": "9e1c8b3103f92fa8092568a44fe64858de7c5c9dc65ce4bea8f168080e889cfd"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "063a0e6448123cd359ad0044cc46b0e490cc7964d45ef4bb9fd842bd2ffbca67"
+    },
+    "improve-codebase-architecture": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
+      "computedHash": "c77b86b4332919499608f9af1880074e1fec65a59b95c70c27a9f39cd137865e"
+    },
+    "microservices-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/microservices-architect/SKILL.md",
+      "computedHash": "674b7d4c18eb009295213cbb49ccdc112db1d2f60bb65848ceb8771bdc69a25f"
+    },
+    "next-best-practices": {
+      "source": "vercel-labs/next-skills",
+      "sourceType": "github",
+      "skillPath": "skills/next-best-practices/SKILL.md",
+      "computedHash": "f4678aef4ffc10a5ea64a91e57abe5a5081af813b06d58d565caf3e8ef56e26c"
+    },
+    "next-compile": {
+      "source": "vercel/next.js",
+      "sourceType": "github",
+      "skillPath": "skills/next-compile/SKILL.md",
+      "computedHash": "c9bd5df74a868b69532b77b205fd7b4e0bb0acc9effde770ff3241a81eaa69fd"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "80a6226e78f6d1fe464214ae0ef449d49d8ffaa3e7704f011e9b418c678ad4d1"
+    }
+  }
+}
