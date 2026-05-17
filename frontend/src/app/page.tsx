@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 
 const services = [
-  { name: "API Gateway", status: "Operational", url: "http://localhost:5000" },
+  { name: "API Gateway", status: "Operational", url: "http://localhost:5050" },
   { name: "Identity Service", status: "Operational", url: "http://localhost:5001" },
   { name: "Billing Service", status: "Operational", url: "http://localhost:5002" },
   { name: "Notification Service", status: "Operational", url: "http://localhost:5003" },

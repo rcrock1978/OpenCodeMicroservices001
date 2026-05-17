@@ -1,6 +1,6 @@
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const backendUrl = `http://localhost:5000/api/catalog/products?${searchParams.toString()}`;
+  const backendUrl = `http://localhost:5050/api/catalog/products?${searchParams.toString()}`;
 
   try {
     const res = await fetch(backendUrl, {

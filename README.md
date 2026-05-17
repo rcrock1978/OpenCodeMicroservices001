@@ -87,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) to view the application.
 
 | Service | Local URL | API Docs |
 |---------|-----------|----------|
-| Gateway | http://localhost:5000 | — |
+| Gateway | http://localhost:5050 | — |
 | Identity | http://localhost:5001 | http://localhost:5001/scalar |
 | Catalog | http://localhost:5002 | http://localhost:5002/scalar |
 | Inventory | http://localhost:5003 | http://localhost:5003/scalar |

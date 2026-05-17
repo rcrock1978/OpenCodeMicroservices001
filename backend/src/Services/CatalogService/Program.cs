@@ -20,7 +20,7 @@ public class Program
     /// <summary>
     /// Main entry point.
     /// </summary>
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -77,6 +77,13 @@ public class Program
         app.MapCategoryEndpoints();
 
         app.MapGet("/", () => Results.Ok(new { service = "CatalogService", status = "running" }));
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CatalogDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            await CatalogDataSeeder.SeedAsync(dbContext, logger);
+        }
 
         app.Run();
     }

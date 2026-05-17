@@ -1,4 +1,4 @@
-const API_BASE = process.env.API_BASE_URL || 'http://localhost:5000';
+const API_BASE = process.env.API_BASE_URL || 'http://localhost:5050';
 
 export interface ApiError {
   code: string;
