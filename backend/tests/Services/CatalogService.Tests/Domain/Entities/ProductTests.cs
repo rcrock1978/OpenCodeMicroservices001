@@ -558,6 +558,7 @@ public class TestCatalogDbContext : DbContext
     public DbSet<Product> Products { get; set; } = null!;
     public DbSet<ProductVariant> ProductVariants { get; set; } = null!;
     public DbSet<Category> Categories { get; set; } = null!;
+    public DbSet<MediaAsset> MediaAssets { get; set; } = null!;
 
     public TestCatalogDbContext(DbContextOptions<TestCatalogDbContext> options)
         : base(options)
@@ -569,5 +570,6 @@ public class TestCatalogDbContext : DbContext
         modelBuilder.ApplyConfiguration(new ProductConfiguration());
         modelBuilder.ApplyConfiguration(new ProductVariantConfiguration());
         modelBuilder.ApplyConfiguration(new CategoryConfiguration());
+        modelBuilder.ApplyConfiguration(new MediaAssetConfiguration());
     }
 }
