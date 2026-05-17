@@ -18,14 +18,20 @@ public static class OrderEndpoints
         var group = app.MapGroup("/api/orders").WithTags("Orders").WithOpenApi();
 
         group.MapGet("/", async (IMediator mediator) =>
-            Results.Ok(await mediator.Send(new GetOrdersQuery())));
+        {
+            var orders = await mediator.Send(new GetOrdersQuery());
+            return Results.Ok(orders.Select(MapToResponse));
+        });
 
         group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, IMediator mediator) =>
-            Results.Ok(await mediator.Send(new GetOrdersByTenantQuery(tenantId))));
+        {
+            var orders = await mediator.Send(new GetOrdersByTenantQuery(tenantId));
+            return Results.Ok(orders.Select(MapToResponse));
+        });
 
         group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
             await mediator.Send(new GetOrderByIdQuery(id)) is Order order
-                ? Results.Ok(order)
+                ? Results.Ok(MapToResponse(order))
                 : Results.NotFound());
 
         group.MapPost("/", async (CreateOrderRequest request, IMediator mediator) =>
@@ -46,7 +52,7 @@ public static class OrderEndpoints
                 request.ShippingAddress);
 
             var order = await mediator.Send(command);
-            return Results.Created($"/api/orders/{order.Id}", order);
+            return Results.Created($"/api/orders/{order.Id}", MapToResponse(order));
         });
 
         group.MapPost("/{id:guid}/cancel", async (Guid id, IMediator mediator) =>
@@ -57,11 +63,36 @@ public static class OrderEndpoints
             if (!result.Success)
                 return Results.BadRequest(result.Error);
 
-            return Results.Ok(result.Order);
+            return Results.Ok(MapToResponse(result.Order!));
         });
 
         return app;
     }
+
+    private static OrderResponse MapToResponse(Order order) =>
+        new(
+            order.Id,
+            order.TenantId,
+            order.CustomerId,
+            order.OrderNumber,
+            order.Status,
+            order.Subtotal,
+            order.ShippingCost,
+            order.TaxAmount,
+            order.Total,
+            order.Currency,
+            order.ShippingAddress,
+            order.CreatedAt,
+            order.Items.Select(i => new OrderItemResponse(
+                i.Id,
+                i.ProductId,
+                i.ProductVariantId,
+                i.ProductName,
+                i.Sku,
+                i.UnitPrice,
+                i.Quantity,
+                i.LineTotal)).ToList()
+        );
 }
 
 /// <summary>
