@@ -21,7 +21,7 @@ public class Program
     /// <summary>
     /// Main entry point.
     /// </summary>
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -79,6 +79,13 @@ public class Program
         app.MapPaymentEndpoints();
 
         app.MapGet("/", () => Results.Ok(new { service = "PaymentService", status = "running" }));
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<PaymentDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            await PaymentDataSeeder.SeedAsync(dbContext, logger);
+        }
 
         app.Run();
     }
