@@ -19,21 +19,30 @@ public static class ProductEndpoints
         var group = app.MapGroup("/api/products").WithTags("Products").WithOpenApi();
 
         group.MapGet("/", async (CatalogDbContext db) =>
-            Results.Ok(await db.Products.AsNoTracking().Include(p => p.Variants).Include(p => p.Category).ToListAsync()));
+        {
+            var products = await db.Products.AsNoTracking()
+                .Include(p => p.Variants)
+                .Include(p => p.Category)
+                .ToListAsync();
+            return Results.Ok(products.Select(MapToResponse));
+        });
 
         group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, CatalogDbContext db) =>
-            Results.Ok(await db.Products.AsNoTracking()
+        {
+            var products = await db.Products.AsNoTracking()
                 .Include(p => p.Variants)
                 .Include(p => p.Category)
                 .Where(p => p.TenantId == tenantId && p.IsActive)
-                .ToListAsync()));
+                .ToListAsync();
+            return Results.Ok(products.Select(MapToResponse));
+        });
 
         group.MapGet("/{id:guid}", async (Guid id, CatalogDbContext db) =>
             await db.Products.AsNoTracking()
                 .Include(p => p.Variants)
                 .Include(p => p.Category)
                 .FirstOrDefaultAsync(p => p.Id == id) is Product product
-                ? Results.Ok(product)
+                ? Results.Ok(MapToResponse(product))
                 : Results.NotFound());
 
         group.MapPost("/", async (CreateProductRequest request, CatalogDbContext db, IPublishEndpoint publishEndpoint) =>
@@ -64,7 +73,7 @@ public static class ProductEndpoints
                 CreatedAt = DateTimeOffset.UtcNow
             });
 
-            return Results.Created($"/api/products/{product.Id}", product);
+            return Results.Created($"/api/products/{product.Id}", MapToResponse(product));
         });
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateProductRequest request, CatalogDbContext db) =>
@@ -91,6 +100,34 @@ public static class ProductEndpoints
 
         return app;
     }
+
+    private static ProductResponse MapToResponse(Product product) =>
+        new(
+            product.Id,
+            product.TenantId,
+            product.Name,
+            product.Description,
+            product.Sku,
+            product.BasePrice,
+            product.SalePrice,
+            product.Currency,
+            product.CategoryId,
+            product.Category is null ? null : new CategorySummaryResponse(
+                product.Category.Id,
+                product.Category.TenantId,
+                product.Category.Name,
+                product.Category.ParentCategoryId,
+                product.Category.IsActive),
+            product.IsActive,
+            product.CreatedAt,
+            product.Variants.Select(v => new ProductVariantResponse(
+                v.Id,
+                v.ProductId,
+                v.Name,
+                v.Sku,
+                v.PriceOverride,
+                v.Attributes)).ToList()
+        );
 }
 
 /// <summary>
@@ -106,7 +143,11 @@ public static class CategoryEndpoints
         var group = app.MapGroup("/api/categories").WithTags("Categories").WithOpenApi();
 
         group.MapGet("/", async (CatalogDbContext db) =>
-            Results.Ok(await db.Categories.AsNoTracking().ToListAsync()));
+        {
+            var categories = await db.Categories.AsNoTracking().ToListAsync();
+            return Results.Ok(categories.Select(c => new CategoryResponse(
+                c.Id, c.TenantId, c.Name, c.ParentCategoryId, c.IsActive)));
+        });
 
         group.MapPost("/", async (CreateCategoryRequest request, CatalogDbContext db) =>
         {
@@ -119,7 +160,8 @@ public static class CategoryEndpoints
             };
             db.Categories.Add(category);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/categories/{category.Id}", category);
+            return Results.Created($"/api/categories/{category.Id}", new CategoryResponse(
+                category.Id, category.TenantId, category.Name, category.ParentCategoryId, category.IsActive));
         });
 
         return app;

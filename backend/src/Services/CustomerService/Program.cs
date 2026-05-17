@@ -21,7 +21,7 @@ public class Program
     /// <summary>
     /// Main entry point.
     /// </summary>
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -78,6 +78,13 @@ public class Program
         app.MapAddressEndpoints();
 
         app.MapGet("/", () => Results.Ok(new { service = "CustomerService", status = "running" }));
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<CustomerDbContext>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            await CustomerDataSeeder.SeedAsync(dbContext, logger);
+        }
 
         app.Run();
     }
