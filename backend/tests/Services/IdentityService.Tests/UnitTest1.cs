@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace IdentityService.Tests;
 
 public class UnitTest1

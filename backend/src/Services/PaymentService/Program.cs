@@ -58,7 +58,6 @@ public class Program
             {
                 tracing.AddAspNetCoreInstrumentation()
                        .AddHttpClientInstrumentation()
-                       .AddEntityFrameworkCoreInstrumentation()
                        .AddOtlpExporter();
             })
             .WithMetrics(metrics =>

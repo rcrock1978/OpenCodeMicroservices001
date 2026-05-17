@@ -76,16 +76,5 @@ public class OrderCancellationStateMachine : MassTransitStateMachine<OrderCancel
     }
 }
 
-/// <summary>
-/// Event published when a payment is refunded.
-/// </summary>
-public record PaymentRefundedIntegrationEvent
-{
-    public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
-    public Guid PaymentIntentId { get; init; }
-    public decimal Amount { get; init; }
-    public DateTimeOffset RefundedAt { get; init; }
-}
 
 

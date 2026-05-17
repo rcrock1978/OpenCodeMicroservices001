@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace CatalogService.Tests;
 
 public class UnitTest1

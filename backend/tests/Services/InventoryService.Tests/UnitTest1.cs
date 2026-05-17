@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace InventoryService.Tests;
 
 public class UnitTest1

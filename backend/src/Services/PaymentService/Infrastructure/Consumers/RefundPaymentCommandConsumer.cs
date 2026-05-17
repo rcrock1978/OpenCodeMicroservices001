@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PaymentService.Domain.Entities;
 using PaymentService.Infrastructure.Persistence;
 using SaaSCommon.Messaging;
+using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace PaymentService.Infrastructure.Consumers;
 

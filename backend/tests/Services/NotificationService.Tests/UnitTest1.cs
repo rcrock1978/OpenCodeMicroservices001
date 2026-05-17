@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace NotificationService.Tests;
 
 public class UnitTest1

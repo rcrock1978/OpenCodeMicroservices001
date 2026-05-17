@@ -14,6 +14,19 @@ public record PaymentProcessedIntegrationEvent : IntegrationEvent
 }
 
 /// <summary>
+/// Published when a payment is refunded.
+/// </summary>
+public record PaymentRefundedIntegrationEvent : IntegrationEvent
+{
+    public override string EventType => nameof(PaymentRefundedIntegrationEvent);
+
+    public Guid PaymentIntentId { get; init; }
+    public Guid OrderId { get; init; }
+    public decimal Amount { get; init; }
+    public DateTimeOffset RefundedAt { get; init; }
+}
+
+/// <summary>
 /// Published when a payment fails.
 /// </summary>
 public record PaymentFailedIntegrationEvent : IntegrationEvent

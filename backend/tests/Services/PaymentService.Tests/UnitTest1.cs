@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace PaymentService.Tests;
 
 public class UnitTest1
