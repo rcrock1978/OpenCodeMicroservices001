@@ -19,17 +19,23 @@ public static class CustomerEndpoints
         var group = app.MapGroup("/api/customers").WithTags("Customers").WithOpenApi();
 
         group.MapGet("/", async (CustomerDbContext db) =>
-            Results.Ok(await db.Customers.AsNoTracking().Include(c => c.Addresses).ToListAsync()));
+        {
+            var customers = await db.Customers.AsNoTracking().Include(c => c.Addresses).ToListAsync();
+            return Results.Ok(customers.Select(MapToResponse));
+        });
 
         group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, CustomerDbContext db) =>
-            Results.Ok(await db.Customers.AsNoTracking()
+        {
+            var customers = await db.Customers.AsNoTracking()
                 .Include(c => c.Addresses)
                 .Where(c => c.TenantId == tenantId)
-                .ToListAsync()));
+                .ToListAsync();
+            return Results.Ok(customers.Select(MapToResponse));
+        });
 
         group.MapGet("/{id:guid}", async (Guid id, CustomerDbContext db) =>
             await db.Customers.AsNoTracking().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == id) is Customer customer
-                ? Results.Ok(customer)
+                ? Results.Ok(MapToResponse(customer))
                 : Results.NotFound());
 
         group.MapPost("/", async (CreateCustomerRequest request, CustomerDbContext db, IPublishEndpoint publishEndpoint) =>
@@ -55,11 +61,33 @@ public static class CustomerEndpoints
                 FullName = $"{customer.FirstName} {customer.LastName}"
             });
 
-            return Results.Created($"/api/customers/{customer.Id}", customer);
+            return Results.Created($"/api/customers/{customer.Id}", MapToResponse(customer));
         });
 
         return app;
     }
+
+    private static CustomerResponse MapToResponse(Customer customer) =>
+        new(
+            customer.Id,
+            customer.TenantId,
+            customer.UserId,
+            customer.Email,
+            customer.FirstName,
+            customer.LastName,
+            customer.PhoneNumber,
+            customer.CreatedAt,
+            customer.Addresses.Select(a => new AddressResponse(
+                a.Id,
+                a.CustomerId,
+                a.Type,
+                a.Street,
+                a.City,
+                a.State,
+                a.PostalCode,
+                a.Country,
+                a.IsDefault)).ToList()
+        );
 }
 
 /// <summary>
@@ -75,7 +103,11 @@ public static class AddressEndpoints
         var group = app.MapGroup("/api/addresses").WithTags("Addresses").WithOpenApi();
 
         group.MapGet("/customer/{customerId:guid}", async (Guid customerId, CustomerDbContext db) =>
-            Results.Ok(await db.Addresses.AsNoTracking().Where(a => a.CustomerId == customerId).ToListAsync()));
+        {
+            var addresses = await db.Addresses.AsNoTracking().Where(a => a.CustomerId == customerId).ToListAsync();
+            return Results.Ok(addresses.Select(a => new AddressResponse(
+                a.Id, a.CustomerId, a.Type, a.Street, a.City, a.State, a.PostalCode, a.Country, a.IsDefault)));
+        });
 
         group.MapPost("/", async (CreateAddressRequest request, CustomerDbContext db) =>
         {
@@ -93,7 +125,8 @@ public static class AddressEndpoints
             };
             db.Addresses.Add(address);
             await db.SaveChangesAsync();
-            return Results.Created($"/api/addresses/{address.Id}", address);
+            return Results.Created($"/api/addresses/{address.Id}", new AddressResponse(
+                address.Id, address.CustomerId, address.Type, address.Street, address.City, address.State, address.PostalCode, address.Country, address.IsDefault));
         });
 
         return app;
