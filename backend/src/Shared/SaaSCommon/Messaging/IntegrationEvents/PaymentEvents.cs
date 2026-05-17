@@ -9,7 +9,6 @@ public record PaymentProcessedIntegrationEvent : IntegrationEvent
 
     public Guid PaymentIntentId { get; init; }
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public decimal Amount { get; init; }
     public DateTimeOffset ProcessedAt { get; init; }
 }
@@ -23,6 +22,5 @@ public record PaymentFailedIntegrationEvent : IntegrationEvent
 
     public Guid PaymentIntentId { get; init; }
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public string FailureReason { get; init; } = null!;
 }

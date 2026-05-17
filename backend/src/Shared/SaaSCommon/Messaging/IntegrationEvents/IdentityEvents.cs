@@ -9,7 +9,6 @@ public record TenantCreatedIntegrationEvent : IntegrationEvent
 {
     public override string EventType => nameof(TenantCreatedIntegrationEvent);
 
-    public Guid TenantId { get; init; }
     public string Name { get; init; } = null!;
     public string Slug { get; init; } = null!;
     public DateTimeOffset CreatedAt { get; init; }
@@ -22,7 +21,6 @@ public record TenantUpdatedIntegrationEvent : IntegrationEvent
 {
     public override string EventType => nameof(TenantUpdatedIntegrationEvent);
 
-    public Guid TenantId { get; init; }
     public string Name { get; init; } = null!;
     public string Slug { get; init; } = null!;
 }
@@ -35,7 +33,6 @@ public record UserRegisteredIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(UserRegisteredIntegrationEvent);
 
     public Guid UserId { get; init; }
-    public Guid TenantId { get; init; }
     public string Email { get; init; } = null!;
     public DateTimeOffset RegisteredAt { get; init; }
 }

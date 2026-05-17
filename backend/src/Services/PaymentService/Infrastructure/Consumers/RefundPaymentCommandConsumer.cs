@@ -2,7 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using PaymentService.Domain.Entities;
 using PaymentService.Infrastructure.Persistence;
-using OrderService.Infrastructure.Sagas;
+using SaaSCommon.Messaging;
 
 namespace PaymentService.Infrastructure.Consumers;
 

@@ -2,6 +2,7 @@ using InventoryService.Domain.Entities;
 using InventoryService.Infrastructure.Persistence;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging;
 using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace InventoryService.Infrastructure.Consumers;
@@ -9,7 +10,7 @@ namespace InventoryService.Infrastructure.Consumers;
 /// <summary>
 /// Consumes inventory reserve commands and publishes reserve success/failure events.
 /// </summary>
-public class InventoryReserveCommandConsumer : IConsumer<OrderService.Infrastructure.Sagas.InventoryReserveCommand>
+public class InventoryReserveCommandConsumer : IConsumer<InventoryReserveCommand>
 {
     private readonly InventoryDbContext _dbContext;
 
@@ -22,7 +23,7 @@ public class InventoryReserveCommandConsumer : IConsumer<OrderService.Infrastruc
     }
 
     /// <inheritdoc />
-    public async Task Consume(ConsumeContext<OrderService.Infrastructure.Sagas.InventoryReserveCommand> context)
+    public async Task Consume(ConsumeContext<InventoryReserveCommand> context)
     {
         var command = context.Message;
         var reservedQuantities = new Dictionary<Guid, int>();

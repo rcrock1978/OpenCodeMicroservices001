@@ -8,7 +8,7 @@ public record ProductCreatedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(ProductCreatedIntegrationEvent);
 
     public Guid ProductId { get; init; }
-    public Guid TenantId { get; init; }
+
     public string Name { get; init; } = null!;
     public string Sku { get; init; } = null!;
     public decimal Price { get; init; }
@@ -23,7 +23,7 @@ public record ProductUpdatedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(ProductUpdatedIntegrationEvent);
 
     public Guid ProductId { get; init; }
-    public Guid TenantId { get; init; }
+
     public string Name { get; init; } = null!;
     public string Sku { get; init; } = null!;
     public decimal Price { get; init; }
@@ -37,7 +37,6 @@ public record ProductDeletedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(ProductDeletedIntegrationEvent);
 
     public Guid ProductId { get; init; }
-    public Guid TenantId { get; init; }
 }
 
 /// <summary>
@@ -48,7 +47,7 @@ public record CategoryCreatedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(CategoryCreatedIntegrationEvent);
 
     public Guid CategoryId { get; init; }
-    public Guid TenantId { get; init; }
+
     public string Name { get; init; } = null!;
     public Guid? ParentCategoryId { get; init; }
 }

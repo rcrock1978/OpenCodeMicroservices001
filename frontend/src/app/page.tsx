@@ -79,7 +79,7 @@ export default function Home() {
         <div className="mt-8 rounded-lg border bg-card p-6">
           <h2 className="text-lg font-semibold mb-2">Getting Started</h2>
           <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
-            <li>Install .NET 9 SDK to build and run backend services</li>
+            <li>Install .NET 10 SDK to build and run backend services</li>
             <li>Install Docker to run infrastructure dependencies (Postgres, Redis, RabbitMQ, Jaeger)</li>
             <li>Run <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">docker-compose up -d</code> to start infrastructure</li>
             <li>Run <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">npm run dev</code> in the frontend directory</li>

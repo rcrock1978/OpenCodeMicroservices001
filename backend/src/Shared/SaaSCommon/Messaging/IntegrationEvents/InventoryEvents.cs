@@ -8,7 +8,6 @@ public record InventoryReservedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(InventoryReservedIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public Dictionary<Guid, int> ReservedQuantities { get; init; } = new();
 }
 
@@ -20,7 +19,6 @@ public record InventoryReservationFailedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(InventoryReservationFailedIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public string Reason { get; init; } = null!;
 }
 
@@ -32,6 +30,5 @@ public record StockReleasedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(StockReleasedIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public Dictionary<Guid, int> ReleasedQuantities { get; init; } = new();
 }

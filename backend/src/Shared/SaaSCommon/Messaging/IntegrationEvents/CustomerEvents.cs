@@ -8,7 +8,6 @@ public record CustomerCreatedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(CustomerCreatedIntegrationEvent);
 
     public Guid CustomerId { get; init; }
-    public Guid TenantId { get; init; }
     public string Email { get; init; } = null!;
     public string FullName { get; init; } = null!;
 }
@@ -21,7 +20,6 @@ public record CustomerUpdatedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(CustomerUpdatedIntegrationEvent);
 
     public Guid CustomerId { get; init; }
-    public Guid TenantId { get; init; }
     public string Email { get; init; } = null!;
     public string FullName { get; init; } = null!;
 }

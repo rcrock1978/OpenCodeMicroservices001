@@ -7,7 +7,7 @@ A fullstack multi-tenant ecommerce application built with Next.js and ASP.NET Co
 This platform provides a modern ecommerce experience with a microservices architecture. Each service owns its own database and communicates via REST APIs and asynchronous messaging. The system supports multi-tenancy, distributed tracing, and event-driven updates.
 
 - **Frontend:** Next.js 16+ (App Router, TypeScript, Tailwind CSS, shadcn/ui)
-- **Backend:** ASP.NET Core 9 microservices with minimal APIs
+- **Backend:** ASP.NET Core 10 microservices with minimal APIs
 - **Infrastructure:** PostgreSQL 17, Redis 7, RabbitMQ 4, Jaeger, Prometheus, Grafana
 - **Orchestration:** Docker Compose
 
@@ -44,7 +44,7 @@ This platform provides a modern ecommerce experience with a microservices archit
 
 ### Prerequisites
 - Node.js 20+ and npm
-- .NET 9 SDK
+- .NET 10 SDK
 - Docker & Docker Compose
 
 ### 1. Start Infrastructure
@@ -143,5 +143,5 @@ Every service exposes health checks at:
 ## Key Libraries
 
 - **Frontend:** next, react, tailwindcss, shadcn/ui, lucide-react, @tanstack/react-query, zustand
-- **Backend:** ASP.NET Core 9, EF Core, Npgsql, YARP, OpenTelemetry, JWT Bearer, MassTransit, MediatR, Serilog, Scalar
+- **Backend:** ASP.NET Core 10, EF Core, Npgsql, YARP, OpenTelemetry, JWT Bearer, MassTransit, MediatR, Serilog, Scalar
 - **Infrastructure:** PostgreSQL 17, Redis 7, RabbitMQ 4

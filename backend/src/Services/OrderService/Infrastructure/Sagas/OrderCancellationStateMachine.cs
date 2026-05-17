@@ -1,4 +1,5 @@
 using MassTransit;
+using SaaSCommon.Messaging;
 using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace OrderService.Infrastructure.Sagas;
@@ -56,7 +57,7 @@ public class OrderCancellationStateMachine : MassTransitStateMachine<OrderCancel
                             OrderId = ctx.Data.OrderId,
                             TenantId = ctx.Data.TenantId
                         }),
-                    else => else
+                    elseBranch => elseBranch
                         .Publish(ctx => new InventoryReleaseCommand
                         {
                             OrderId = ctx.Data.OrderId,
@@ -87,11 +88,4 @@ public record PaymentRefundedIntegrationEvent
     public DateTimeOffset RefundedAt { get; init; }
 }
 
-/// <summary>
-/// Command to refund a payment.
-/// </summary>
-public record RefundPaymentCommand
-{
-    public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
-}
+

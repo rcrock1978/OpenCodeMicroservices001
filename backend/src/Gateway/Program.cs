@@ -1,3 +1,5 @@
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using SaaSCommon.Middleware;
 using Scalar.AspNetCore;
 using Serilog;

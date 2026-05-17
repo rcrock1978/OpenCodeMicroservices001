@@ -2,6 +2,7 @@ using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using PaymentService.Domain.Entities;
 using PaymentService.Infrastructure.Persistence;
+using SaaSCommon.Messaging;
 using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace PaymentService.Infrastructure.Consumers;
@@ -9,7 +10,7 @@ namespace PaymentService.Infrastructure.Consumers;
 /// <summary>
 /// Consumes payment initiate commands and processes payment simulation.
 /// </summary>
-public class PaymentInitiateCommandConsumer : IConsumer<OrderService.Infrastructure.Sagas.PaymentInitiateCommand>
+public class PaymentInitiateCommandConsumer : IConsumer<PaymentInitiateCommand>
 {
     private readonly PaymentDbContext _dbContext;
 
@@ -22,7 +23,7 @@ public class PaymentInitiateCommandConsumer : IConsumer<OrderService.Infrastruct
     }
 
     /// <inheritdoc />
-    public async Task Consume(ConsumeContext<OrderService.Infrastructure.Sagas.PaymentInitiateCommand> context)
+    public async Task Consume(ConsumeContext<PaymentInitiateCommand> context)
     {
         var command = context.Message;
 

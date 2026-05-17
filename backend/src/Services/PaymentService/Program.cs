@@ -2,6 +2,8 @@ using PaymentService.Api.Endpoints;
 using PaymentService.Infrastructure.Consumers;
 using PaymentService.Infrastructure.Persistence;
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;

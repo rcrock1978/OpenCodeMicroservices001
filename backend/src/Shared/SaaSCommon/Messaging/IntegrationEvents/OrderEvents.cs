@@ -8,7 +8,6 @@ public record OrderPlacedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(OrderPlacedIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public Guid CustomerId { get; init; }
     public decimal TotalAmount { get; init; }
     public IReadOnlyList<OrderItemDto> Items { get; init; } = new List<OrderItemDto>();
@@ -27,7 +26,6 @@ public record OrderPaidIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(OrderPaidIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public Guid PaymentIntentId { get; init; }
 }
 
@@ -39,7 +37,6 @@ public record OrderCancelledIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(OrderCancelledIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public string Reason { get; init; } = null!;
 }
 
@@ -51,6 +48,5 @@ public record OrderShippedIntegrationEvent : IntegrationEvent
     public override string EventType => nameof(OrderShippedIntegrationEvent);
 
     public Guid OrderId { get; init; }
-    public Guid TenantId { get; init; }
     public string TrackingNumber { get; init; } = null!;
 }

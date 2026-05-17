@@ -2,13 +2,14 @@ using InventoryService.Domain.Entities;
 using InventoryService.Infrastructure.Persistence;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
+using SaaSCommon.Messaging;
 
 namespace InventoryService.Infrastructure.Consumers;
 
 /// <summary>
 /// Consumes inventory release commands and releases reserved stock.
 /// </summary>
-public class InventoryReleaseCommandConsumer : IConsumer<OrderService.Infrastructure.Sagas.InventoryReleaseCommand>
+public class InventoryReleaseCommandConsumer : IConsumer<InventoryReleaseCommand>
 {
     private readonly InventoryDbContext _dbContext;
 
@@ -21,7 +22,7 @@ public class InventoryReleaseCommandConsumer : IConsumer<OrderService.Infrastruc
     }
 
     /// <inheritdoc />
-    public async Task Consume(ConsumeContext<OrderService.Infrastructure.Sagas.InventoryReleaseCommand> context)
+    public async Task Consume(ConsumeContext<InventoryReleaseCommand> context)
     {
         var command = context.Message;
         var reservations = await _dbContext.StockReservations

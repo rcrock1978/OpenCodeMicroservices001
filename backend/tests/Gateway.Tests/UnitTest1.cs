@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace Gateway.Tests;
 
 public class UnitTest1

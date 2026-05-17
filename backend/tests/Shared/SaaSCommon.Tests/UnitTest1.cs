@@ -1,3 +1,5 @@
+using Xunit;
+
 namespace SaaSCommon.Tests;
 
 public class UnitTest1

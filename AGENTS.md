@@ -5,7 +5,7 @@
 This is a fullstack multi-tenant ecommerce SaaS application built with a microservices architecture.
 
 - **Frontend:** Next.js 16+ (App Router, TypeScript, Tailwind CSS, shadcn/ui)
-- **Backend:** ASP.NET Core 9 microservices with minimal APIs
+- **Backend:** ASP.NET Core 10 microservices with minimal APIs
 - **Infrastructure:** PostgreSQL, Redis, RabbitMQ, Jaeger, Prometheus, Grafana
 - **Orchestration:** Docker Compose
 
@@ -57,7 +57,7 @@ This is a fullstack multi-tenant ecommerce SaaS application built with a microse
 
 ### Key Libraries
 - **Frontend:** next, react, tailwindcss, shadcn/ui, lucide-react, @tanstack/react-query, zustand
-- **Backend:** ASP.NET Core 9, EF Core, Npgsql, YARP, OpenTelemetry, JWT Bearer, MassTransit, MediatR, Serilog, Scalar
+- **Backend:** ASP.NET Core 10, EF Core, Npgsql, YARP, OpenTelemetry, JWT Bearer, MassTransit, MediatR, Serilog, Scalar
 - **Infrastructure:** PostgreSQL 17, Redis 7, RabbitMQ 4
 
 ## Project Structure
@@ -100,7 +100,7 @@ The frontend follows the design system defined in `DESIGN.md`:
 
 ### Prerequisites
 - Node.js 20+ and npm
-- .NET 9 SDK
+- .NET 10 SDK
 - Docker and Docker Compose
 
 ### Running Infrastructure
@@ -173,7 +173,7 @@ Each service exposes Scalar UI at `/scalar` when running in Development mode.
 
 ## Known Architectural Decisions
 
-1. **Scalar over Swashbuckle:** .NET 9 built-in OpenAPI + Scalar.AspNetCore replaces SwaggerUI
+1. **Scalar over Swashbuckle:** .NET 10 built-in OpenAPI + Scalar.AspNetCore replaces SwaggerUI
 2. **MassTransit over raw RabbitMQ:** Provides sagas, outbox, consumer discovery, retry policies
 3. **Stub JWT auth:** No real identity provider; hardcoded signing key for development only
 4. **Payment simulation:** No real Stripe integration; test card heuristics determine success/failure

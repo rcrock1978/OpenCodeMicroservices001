@@ -2,6 +2,8 @@ using OrderService.Api.Endpoints;
 using OrderService.Infrastructure.Persistence;
 using OrderService.Infrastructure.Sagas;
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
@@ -61,7 +63,6 @@ public class Program
             {
                 tracing.AddAspNetCoreInstrumentation()
                        .AddHttpClientInstrumentation()
-                       .AddEntityFrameworkCoreInstrumentation()
                        .AddOtlpExporter();
             })
             .WithMetrics(metrics =>

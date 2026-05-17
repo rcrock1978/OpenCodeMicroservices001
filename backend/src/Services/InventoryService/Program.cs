@@ -2,6 +2,8 @@ using InventoryService.Api.Endpoints;
 using InventoryService.Infrastructure.Consumers;
 using InventoryService.Infrastructure.Persistence;
 using MassTransit;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
 using SaaSCommon.Health;
 using SaaSCommon.Middleware;
@@ -56,7 +58,6 @@ public class Program
             {
                 tracing.AddAspNetCoreInstrumentation()
                        .AddHttpClientInstrumentation()
-                       .AddEntityFrameworkCoreInstrumentation()
                        .AddOtlpExporter();
             })
             .WithMetrics(metrics =>
