@@ -13,6 +13,8 @@ public static class IdentityDbContextSeed
     /// </summary>
     public static async Task SeedAsync(IdentityDbContext context)
     {
+        await context.Database.EnsureCreatedAsync();
+
         await SeedTenantsAsync(context);
         await SeedUsersAsync(context);
     }

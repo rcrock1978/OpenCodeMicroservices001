@@ -16,7 +16,8 @@
 set -euo pipefail
 
 # ── Configuration ──────────────────────────────────────────────────────────────
-GATEWAY_URL="http://localhost:5000"
+# NOTE: Port 5000 is reserved by macOS Control Center. Use 5050 (Docker gateway).
+GATEWAY_URL="http://localhost:5050"
 
 # Direct service ports for health checks (gateway path-transform strips /api/{svc})
 # so health checks must be hit directly on each service.
