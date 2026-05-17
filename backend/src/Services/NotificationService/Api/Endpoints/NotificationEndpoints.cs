@@ -1,6 +1,7 @@
-using Microsoft.EntityFrameworkCore;
+using MediatR;
+using NotificationService.Application.Commands;
+using NotificationService.Application.Queries;
 using NotificationService.Domain.Entities;
-using NotificationService.Infrastructure.Persistence;
 
 namespace NotificationService.Api.Endpoints;
 
@@ -16,61 +17,43 @@ public static class NotificationEndpoints
     {
         var group = app.MapGroup("/api/notifications").WithTags("Notifications").WithOpenApi();
 
-        group.MapGet("/", async (NotificationDbContext db) =>
-            Results.Ok(await db.Notifications.OrderByDescending(n => n.CreatedAt).ToListAsync()));
+        group.MapGet("/", async (IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetNotificationsQuery(), cancellationToken)));
 
-        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, NotificationDbContext db) =>
-            Results.Ok(await db.Notifications
-                .Where(n => n.TenantId == tenantId)
-                .OrderByDescending(n => n.CreatedAt)
-                .ToListAsync()));
+        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetNotificationsByTenantQuery(tenantId), cancellationToken)));
 
-        group.MapPost("/", async (CreateNotificationRequest request, NotificationDbContext db) =>
+        group.MapPost("/", async (CreateNotificationRequest request, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var notification = new Notification
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                RecipientEmail = request.RecipientEmail,
-                Subject = request.Subject,
-                Body = request.Body,
-                Type = request.Type,
-                Status = NotificationStatus.Pending
-            };
-            db.Notifications.Add(notification);
-            await db.SaveChangesAsync();
+            var command = new CreateNotificationCommand(
+                request.TenantId,
+                request.RecipientEmail,
+                request.Subject,
+                request.Body,
+                request.Type);
+            var notification = await mediator.Send(command, cancellationToken);
             return Results.Created($"/api/notifications/{notification.Id}", notification);
         });
 
-        group.MapPost("/{id:guid}/send", async (Guid id, NotificationDbContext db) =>
+        group.MapPost("/{id:guid}/send", async (Guid id, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var notification = await db.Notifications.FindAsync(id);
-            if (notification is null) return Results.NotFound();
-
-            // Simulate sending notification
-            notification.Status = NotificationStatus.Sent;
-            notification.SentAt = DateTime.UtcNow;
-            await db.SaveChangesAsync();
-            return Results.Ok(notification);
+            var notification = await mediator.Send(new SendNotificationCommand(id), cancellationToken);
+            return notification is null ? Results.NotFound() : Results.Ok(notification);
         });
 
-        group.MapGet("/templates", async (NotificationDbContext db) =>
-            Results.Ok(await db.Templates.AsNoTracking().ToListAsync()));
+        group.MapGet("/templates", async (IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetTemplatesQuery(), cancellationToken)));
 
-        group.MapPost("/templates", async (CreateTemplateRequest request, NotificationDbContext db) =>
+        group.MapPost("/templates", async (CreateTemplateRequest request, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var template = new Template
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                Key = request.Key,
-                Subject = request.Subject,
-                BodyHtml = request.BodyHtml,
-                BodyText = request.BodyText,
-                Channel = request.Channel
-            };
-            db.Templates.Add(template);
-            await db.SaveChangesAsync();
+            var command = new CreateTemplateCommand(
+                request.TenantId,
+                request.Key,
+                request.Subject,
+                request.BodyHtml,
+                request.BodyText,
+                request.Channel);
+            var template = await mediator.Send(command, cancellationToken);
             return Results.Created($"/api/notifications/templates/{template.Id}", template);
         });
 

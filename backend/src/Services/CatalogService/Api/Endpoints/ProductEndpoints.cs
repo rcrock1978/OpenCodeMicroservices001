@@ -1,8 +1,7 @@
-using MassTransit;
+using MediatR;
+using CatalogService.Application.Commands;
+using CatalogService.Application.Queries;
 using CatalogService.Domain.Entities;
-using CatalogService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace CatalogService.Api.Endpoints;
 
@@ -18,84 +17,58 @@ public static class ProductEndpoints
     {
         var group = app.MapGroup("/api/products").WithTags("Products").WithOpenApi();
 
-        group.MapGet("/", async (CatalogDbContext db) =>
+        group.MapGet("/", async (IMediator mediator) =>
         {
-            var products = await db.Products.AsNoTracking()
-                .Include(p => p.Variants)
-                .Include(p => p.Category)
-                .ToListAsync();
-            return Results.Ok(products.Select(MapToResponse));
+            var products = await mediator.Send(new GetProductsQuery());
+            return Results.Ok(products);
         });
 
-        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, CatalogDbContext db) =>
+        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, IMediator mediator) =>
         {
-            var products = await db.Products.AsNoTracking()
-                .Include(p => p.Variants)
-                .Include(p => p.Category)
-                .Where(p => p.TenantId == tenantId && p.IsActive)
-                .ToListAsync();
-            return Results.Ok(products.Select(MapToResponse));
+            var products = await mediator.Send(new GetProductsByTenantQuery(tenantId));
+            return Results.Ok(products);
         });
 
-        group.MapGet("/{id:guid}", async (Guid id, CatalogDbContext db) =>
-            await db.Products.AsNoTracking()
-                .Include(p => p.Variants)
-                .Include(p => p.Category)
-                .FirstOrDefaultAsync(p => p.Id == id) is Product product
-                ? Results.Ok(MapToResponse(product))
-                : Results.NotFound());
-
-        group.MapPost("/", async (CreateProductRequest request, CatalogDbContext db, IPublishEndpoint publishEndpoint) =>
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
         {
-            var product = new Product
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                Name = request.Name,
-                Description = request.Description,
-                Sku = request.Sku,
-                BasePrice = request.BasePrice,
-                SalePrice = request.SalePrice,
-                Currency = request.Currency,
-                CategoryId = request.CategoryId,
-                IsActive = true
-            };
-            db.Products.Add(product);
-            await db.SaveChangesAsync();
-
-            await publishEndpoint.Publish(new ProductCreatedIntegrationEvent
-            {
-                ProductId = product.Id,
-                TenantId = product.TenantId,
-                Name = product.Name,
-                Sku = product.Sku,
-                Price = product.BasePrice,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
-
-            return Results.Created($"/api/products/{product.Id}", MapToResponse(product));
+            var product = await mediator.Send(new GetProductByIdQuery(id));
+            return product is null ? Results.NotFound() : Results.Ok(product);
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, UpdateProductRequest request, CatalogDbContext db) =>
+        group.MapPost("/", async (CreateProductRequest request, IMediator mediator) =>
         {
-            var product = await db.Products.FindAsync(id);
-            if (product is null) return Results.NotFound();
-            product.Name = request.Name;
-            product.Description = request.Description;
-            product.BasePrice = request.BasePrice;
-            product.SalePrice = request.SalePrice;
-            product.IsActive = request.IsActive;
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var command = new CreateProductCommand(
+                request.TenantId,
+                request.Name,
+                request.Description,
+                request.Sku,
+                request.BasePrice,
+                request.SalePrice,
+                request.Currency,
+                request.CategoryId);
+
+            var product = await mediator.Send(command);
+            return Results.Created($"/api/products/{product.Id}", product);
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, CatalogDbContext db) =>
+        group.MapPut("/{id:guid}", async (Guid id, UpdateProductRequest request, IMediator mediator) =>
         {
-            var product = await db.Products.FindAsync(id);
-            if (product is null) return Results.NotFound();
-            product.IsActive = false;
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var command = new UpdateProductCommand(
+                id,
+                request.Name,
+                request.Description,
+                request.BasePrice,
+                request.SalePrice,
+                request.IsActive);
+
+            var success = await mediator.Send(command);
+            return success ? Results.NoContent() : Results.NotFound();
+        });
+
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator) =>
+        {
+            var success = await mediator.Send(new DeleteProductCommand(id));
+            return success ? Results.NoContent() : Results.NotFound();
         });
 
         return app;
@@ -142,26 +115,21 @@ public static class CategoryEndpoints
     {
         var group = app.MapGroup("/api/categories").WithTags("Categories").WithOpenApi();
 
-        group.MapGet("/", async (CatalogDbContext db) =>
+        group.MapGet("/", async (IMediator mediator) =>
         {
-            var categories = await db.Categories.AsNoTracking().ToListAsync();
-            return Results.Ok(categories.Select(c => new CategoryResponse(
-                c.Id, c.TenantId, c.Name, c.ParentCategoryId, c.IsActive)));
+            var categories = await mediator.Send(new GetCategoriesQuery());
+            return Results.Ok(categories);
         });
 
-        group.MapPost("/", async (CreateCategoryRequest request, CatalogDbContext db) =>
+        group.MapPost("/", async (CreateCategoryRequest request, IMediator mediator) =>
         {
-            var category = new Category
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                Name = request.Name,
-                ParentCategoryId = request.ParentCategoryId
-            };
-            db.Categories.Add(category);
-            await db.SaveChangesAsync();
-            return Results.Created($"/api/categories/{category.Id}", new CategoryResponse(
-                category.Id, category.TenantId, category.Name, category.ParentCategoryId, category.IsActive));
+            var command = new CreateCategoryCommand(
+                request.TenantId,
+                request.Name,
+                request.ParentCategoryId);
+
+            var category = await mediator.Send(command);
+            return Results.Created($"/api/categories/{category.Id}", category);
         });
 
         return app;

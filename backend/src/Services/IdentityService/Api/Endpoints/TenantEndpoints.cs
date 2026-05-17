@@ -1,8 +1,6 @@
-using MassTransit;
-using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using SaaSCommon.Messaging.IntegrationEvents;
+using IdentityService.Application.Commands;
+using IdentityService.Application.Queries;
+using MediatR;
 
 namespace IdentityService.Api.Endpoints;
 
@@ -18,45 +16,24 @@ public static class TenantEndpoints
     {
         var group = app.MapGroup("/api/tenants").WithTags("Tenants").WithOpenApi();
 
-        group.MapGet("/", async (IdentityDbContext db) =>
-            Results.Ok(await db.Tenants.ToListAsync()));
+        group.MapGet("/", async (IMediator mediator, CancellationToken ct) =>
+            Results.Ok(await mediator.Send(new GetTenantsQuery(), ct)));
 
-        group.MapGet("/{id:guid}", async (Guid id, IdentityDbContext db) =>
-            await db.Tenants.FindAsync(id) is Tenant tenant
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new GetTenantByIdQuery(id), ct) is { } tenant
                 ? Results.Ok(tenant)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateTenantRequest request, IdentityDbContext db, IPublishEndpoint publishEndpoint) =>
+        group.MapPost("/", async (CreateTenantRequest request, IMediator mediator, CancellationToken ct) =>
         {
-            var tenant = new Tenant
-            {
-                Id = Guid.NewGuid(),
-                Name = request.Name,
-                Subdomain = request.Subdomain,
-                SubscriptionPlanId = request.SubscriptionPlanId
-            };
-            db.Tenants.Add(tenant);
-            await db.SaveChangesAsync();
-
-            await publishEndpoint.Publish(new TenantCreatedIntegrationEvent
-            {
-                TenantId = tenant.Id,
-                Name = tenant.Name,
-                Slug = tenant.Subdomain,
-                CreatedAt = DateTimeOffset.UtcNow
-            });
-
+            var tenant = await mediator.Send(new CreateTenantCommand(request.Name, request.Subdomain, request.SubscriptionPlanId), ct);
             return Results.Created($"/api/tenants/{tenant.Id}", tenant);
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, UpdateTenantRequest request, IdentityDbContext db) =>
+        group.MapPut("/{id:guid}", async (Guid id, UpdateTenantRequest request, IMediator mediator, CancellationToken ct) =>
         {
-            var tenant = await db.Tenants.FindAsync(id);
-            if (tenant is null) return Results.NotFound();
-            tenant.Name = request.Name;
-            tenant.IsActive = request.IsActive;
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var tenant = await mediator.Send(new UpdateTenantCommand(id, request.Name, request.IsActive), ct);
+            return tenant is not null ? Results.NoContent() : Results.NotFound();
         });
 
         return app;

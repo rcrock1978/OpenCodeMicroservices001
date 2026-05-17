@@ -1,6 +1,7 @@
+using MediatR;
+using PaymentService.Application.Commands;
+using PaymentService.Application.Queries;
 using PaymentService.Domain.Entities;
-using PaymentService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
 
 namespace PaymentService.Api.Endpoints;
 
@@ -16,70 +17,57 @@ public static class PaymentEndpoints
     {
         var group = app.MapGroup("/api/payments").WithTags("Payments").WithOpenApi();
 
-        group.MapGet("/intents", async (PaymentDbContext db) =>
-            Results.Ok(await db.PaymentIntents.AsNoTracking().ToListAsync()));
+        group.MapGet("/intents", async (IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetPaymentIntentsQuery(), cancellationToken)));
 
-        group.MapGet("/intents/{id:guid}", async (Guid id, PaymentDbContext db) =>
-            await db.PaymentIntents.AsNoTracking().FirstOrDefaultAsync(p => p.Id == id) is PaymentIntent intent
+        group.MapGet("/intents/{id:guid}", async (Guid id, IMediator mediator, CancellationToken cancellationToken) =>
+            await mediator.Send(new GetPaymentIntentByIdQuery(id), cancellationToken) is PaymentIntent intent
                 ? Results.Ok(intent)
                 : Results.NotFound());
 
-        group.MapPost("/intents", async (CreatePaymentIntentRequest request, PaymentDbContext db) =>
+        group.MapPost("/intents", async (CreatePaymentIntentRequest request, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            // Simulate payment processing
-            var status = request.Amount > 0 && !request.TestFailure
-                ? PaymentStatus.Succeeded
-                : PaymentStatus.Failed;
-
-            var intent = new PaymentIntent
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                OrderId = request.OrderId,
-                CustomerId = request.CustomerId,
-                Amount = request.Amount,
-                Currency = request.Currency,
-                IdempotencyKey = request.IdempotencyKey,
-                Status = status,
-                PaymentMethod = request.PaymentMethod,
-                FailureReason = status == PaymentStatus.Failed ? "Test failure or zero amount" : null,
-                CapturedAt = status == PaymentStatus.Succeeded ? DateTime.UtcNow : null
-            };
-            db.PaymentIntents.Add(intent);
-            await db.SaveChangesAsync();
+            var command = new CreatePaymentIntentCommand(
+                request.TenantId,
+                request.OrderId,
+                request.CustomerId,
+                request.Amount,
+                request.Currency,
+                request.IdempotencyKey,
+                request.PaymentMethod,
+                request.TestFailure);
+            var intent = await mediator.Send(command, cancellationToken);
             return Results.Created($"/api/payments/intents/{intent.Id}", intent);
         });
 
-        group.MapPost("/intents/{id:guid}/refund", async (Guid id, PaymentDbContext db) =>
+        group.MapPost("/intents/{id:guid}/refund", async (Guid id, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var intent = await db.PaymentIntents.FindAsync(id);
-            if (intent is null) return Results.NotFound();
-            if (intent.Status != PaymentStatus.Succeeded)
-                return Results.BadRequest("Only succeeded payments can be refunded");
-            intent.Status = PaymentStatus.Refunded;
-            await db.SaveChangesAsync();
-            return Results.Ok(intent);
+            try
+            {
+                var intent = await mediator.Send(new RefundPaymentIntentCommand(id), cancellationToken);
+                return intent is null ? Results.NotFound() : Results.Ok(intent);
+            }
+            catch (InvalidOperationException ex) when (ex.Message == "Only succeeded payments can be refunded")
+            {
+                return Results.BadRequest(ex.Message);
+            }
         });
 
-        group.MapGet("/methods", async (PaymentDbContext db) =>
-            Results.Ok(await db.PaymentMethods.AsNoTracking().ToListAsync()));
+        group.MapGet("/methods", async (IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetPaymentMethodsQuery(), cancellationToken)));
 
-        group.MapPost("/methods", async (CreatePaymentMethodRequest request, PaymentDbContext db) =>
+        group.MapPost("/methods", async (CreatePaymentMethodRequest request, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var method = new PaymentMethod
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                CustomerId = request.CustomerId,
-                Type = request.Type,
-                LastFour = request.LastFour,
-                Brand = request.Brand,
-                ExpMonth = request.ExpMonth,
-                ExpYear = request.ExpYear,
-                IsDefault = request.IsDefault
-            };
-            db.PaymentMethods.Add(method);
-            await db.SaveChangesAsync();
+            var command = new CreatePaymentMethodCommand(
+                request.TenantId,
+                request.CustomerId,
+                request.Type,
+                request.LastFour,
+                request.Brand,
+                request.ExpMonth,
+                request.ExpYear,
+                request.IsDefault);
+            var method = await mediator.Send(command, cancellationToken);
             return Results.Created($"/api/payments/methods/{method.Id}", method);
         });
 

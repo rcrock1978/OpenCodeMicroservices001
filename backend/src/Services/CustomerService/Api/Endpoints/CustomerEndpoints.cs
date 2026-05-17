@@ -1,8 +1,7 @@
-using MassTransit;
+using CustomerService.Application.Commands;
+using CustomerService.Application.Queries;
 using CustomerService.Domain.Entities;
-using CustomerService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using SaaSCommon.Messaging.IntegrationEvents;
+using MediatR;
 
 namespace CustomerService.Api.Endpoints;
 
@@ -18,76 +17,39 @@ public static class CustomerEndpoints
     {
         var group = app.MapGroup("/api/customers").WithTags("Customers").WithOpenApi();
 
-        group.MapGet("/", async (CustomerDbContext db) =>
+        group.MapGet("/", async (IMediator mediator) =>
         {
-            var customers = await db.Customers.AsNoTracking().Include(c => c.Addresses).ToListAsync();
-            return Results.Ok(customers.Select(MapToResponse));
+            var customers = await mediator.Send(new GetCustomersQuery());
+            return Results.Ok(customers);
         });
 
-        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, CustomerDbContext db) =>
+        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, IMediator mediator) =>
         {
-            var customers = await db.Customers.AsNoTracking()
-                .Include(c => c.Addresses)
-                .Where(c => c.TenantId == tenantId)
-                .ToListAsync();
-            return Results.Ok(customers.Select(MapToResponse));
+            var customers = await mediator.Send(new GetCustomersByTenantQuery(tenantId));
+            return Results.Ok(customers);
         });
 
-        group.MapGet("/{id:guid}", async (Guid id, CustomerDbContext db) =>
-            await db.Customers.AsNoTracking().Include(c => c.Addresses).FirstOrDefaultAsync(c => c.Id == id) is Customer customer
-                ? Results.Ok(MapToResponse(customer))
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
+            await mediator.Send(new GetCustomerByIdQuery(id)) is { } customer
+                ? Results.Ok(customer)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateCustomerRequest request, CustomerDbContext db, IPublishEndpoint publishEndpoint) =>
+        group.MapPost("/", async (CreateCustomerRequest request, IMediator mediator) =>
         {
-            var customer = new Customer
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                UserId = request.UserId,
-                Email = request.Email,
-                FirstName = request.FirstName,
-                LastName = request.LastName,
-                PhoneNumber = request.PhoneNumber
-            };
-            db.Customers.Add(customer);
-            await db.SaveChangesAsync();
+            var command = new CreateCustomerCommand(
+                request.TenantId,
+                request.UserId,
+                request.Email,
+                request.FirstName,
+                request.LastName,
+                request.PhoneNumber);
 
-            await publishEndpoint.Publish(new CustomerCreatedIntegrationEvent
-            {
-                CustomerId = customer.Id,
-                TenantId = customer.TenantId,
-                Email = customer.Email,
-                FullName = $"{customer.FirstName} {customer.LastName}"
-            });
-
-            return Results.Created($"/api/customers/{customer.Id}", MapToResponse(customer));
+            var response = await mediator.Send(command);
+            return Results.Created($"/api/customers/{response.Id}", response);
         });
 
         return app;
     }
-
-    private static CustomerResponse MapToResponse(Customer customer) =>
-        new(
-            customer.Id,
-            customer.TenantId,
-            customer.UserId,
-            customer.Email,
-            customer.FirstName,
-            customer.LastName,
-            customer.PhoneNumber,
-            customer.CreatedAt,
-            customer.Addresses.Select(a => new AddressResponse(
-                a.Id,
-                a.CustomerId,
-                a.Type,
-                a.Street,
-                a.City,
-                a.State,
-                a.PostalCode,
-                a.Country,
-                a.IsDefault)).ToList()
-        );
 }
 
 /// <summary>
@@ -102,31 +64,26 @@ public static class AddressEndpoints
     {
         var group = app.MapGroup("/api/addresses").WithTags("Addresses").WithOpenApi();
 
-        group.MapGet("/customer/{customerId:guid}", async (Guid customerId, CustomerDbContext db) =>
+        group.MapGet("/customer/{customerId:guid}", async (Guid customerId, IMediator mediator) =>
         {
-            var addresses = await db.Addresses.AsNoTracking().Where(a => a.CustomerId == customerId).ToListAsync();
-            return Results.Ok(addresses.Select(a => new AddressResponse(
-                a.Id, a.CustomerId, a.Type, a.Street, a.City, a.State, a.PostalCode, a.Country, a.IsDefault)));
+            var addresses = await mediator.Send(new GetAddressesByCustomerQuery(customerId));
+            return Results.Ok(addresses);
         });
 
-        group.MapPost("/", async (CreateAddressRequest request, CustomerDbContext db) =>
+        group.MapPost("/", async (CreateAddressRequest request, IMediator mediator) =>
         {
-            var address = new Address
-            {
-                Id = Guid.NewGuid(),
-                CustomerId = request.CustomerId,
-                Type = request.Type,
-                Street = request.Street,
-                City = request.City,
-                State = request.State,
-                PostalCode = request.PostalCode,
-                Country = request.Country,
-                IsDefault = request.IsDefault
-            };
-            db.Addresses.Add(address);
-            await db.SaveChangesAsync();
-            return Results.Created($"/api/addresses/{address.Id}", new AddressResponse(
-                address.Id, address.CustomerId, address.Type, address.Street, address.City, address.State, address.PostalCode, address.Country, address.IsDefault));
+            var command = new CreateAddressCommand(
+                request.CustomerId,
+                request.Type,
+                request.Street,
+                request.City,
+                request.State,
+                request.PostalCode,
+                request.Country,
+                request.IsDefault);
+
+            var response = await mediator.Send(command);
+            return Results.Created($"/api/addresses/{response.Id}", response);
         });
 
         return app;

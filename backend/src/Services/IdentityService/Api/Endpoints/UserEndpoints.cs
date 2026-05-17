@@ -1,6 +1,7 @@
+using IdentityService.Application.Commands;
+using IdentityService.Application.Queries;
 using IdentityService.Domain.Entities;
-using IdentityService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using MediatR;
 
 namespace IdentityService.Api.Endpoints;
 
@@ -16,37 +17,24 @@ public static class UserEndpoints
     {
         var group = app.MapGroup("/api/users").WithTags("Users").WithOpenApi();
 
-        group.MapGet("/", async (IdentityDbContext db) =>
-            Results.Ok(await db.Users.Include(u => u.Tenant).ToListAsync()));
+        group.MapGet("/", async (IMediator mediator, CancellationToken ct) =>
+            Results.Ok(await mediator.Send(new GetUsersQuery(), ct)));
 
-        group.MapGet("/{id:guid}", async (Guid id, IdentityDbContext db) =>
-            await db.Users.Include(u => u.Tenant).FirstOrDefaultAsync(u => u.Id == id) is User user
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new GetUserByIdQuery(id), ct) is { } user
                 ? Results.Ok(user)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateUserRequest request, IdentityDbContext db) =>
+        group.MapPost("/", async (CreateUserRequest request, IMediator mediator, CancellationToken ct) =>
         {
-            var user = new User
-            {
-                Id = Guid.NewGuid(),
-                Email = request.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                DisplayName = request.DisplayName,
-                TenantId = request.TenantId,
-                Role = request.Role
-            };
-            db.Users.Add(user);
-            await db.SaveChangesAsync();
+            var user = await mediator.Send(new CreateUserCommand(request.Email, request.Password, request.DisplayName, request.TenantId, request.Role), ct);
             return Results.Created($"/api/users/{user.Id}", user);
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, IdentityDbContext db) =>
+        group.MapDelete("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken ct) =>
         {
-            var user = await db.Users.FindAsync(id);
-            if (user is null) return Results.NotFound();
-            db.Users.Remove(user);
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var deleted = await mediator.Send(new DeleteUserCommand(id), ct);
+            return deleted ? Results.NoContent() : Results.NotFound();
         });
 
         return app;

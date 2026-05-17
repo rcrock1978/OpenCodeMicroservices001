@@ -51,6 +51,8 @@ public class Program
 
         builder.Services.AddOpenApi();
 
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+
         builder.Services.AddStandardHealthChecks("PaymentService");
 
         builder.Services.AddOpenTelemetry()

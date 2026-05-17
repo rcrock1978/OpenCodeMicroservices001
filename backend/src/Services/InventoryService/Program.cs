@@ -2,6 +2,7 @@ using InventoryService.Api.Endpoints;
 using InventoryService.Infrastructure.Consumers;
 using InventoryService.Infrastructure.Persistence;
 using MassTransit;
+using MediatR;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
@@ -48,6 +49,8 @@ public class Program
                 cfg.ConfigureEndpoints(context);
             });
         });
+
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
         builder.Services.AddOpenApi();
 

@@ -2,6 +2,7 @@ using CustomerService.Api.Endpoints;
 using CustomerService.Infrastructure.Consumers;
 using CustomerService.Infrastructure.Persistence;
 using MassTransit;
+using MediatR;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
@@ -32,6 +33,8 @@ public class Program
 
         builder.Services.AddDbContext<CustomerDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
         builder.Services.AddMassTransit(x =>
         {

@@ -1,8 +1,7 @@
-using MassTransit;
+using MediatR;
+using OrderService.Application.Commands;
+using OrderService.Application.Queries;
 using OrderService.Domain.Entities;
-using OrderService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
-using SaaSCommon.Messaging.IntegrationEvents;
 
 namespace OrderService.Api.Endpoints;
 
@@ -18,91 +17,47 @@ public static class OrderEndpoints
     {
         var group = app.MapGroup("/api/orders").WithTags("Orders").WithOpenApi();
 
-        group.MapGet("/", async (OrderDbContext db) =>
-            Results.Ok(await db.Orders.AsNoTracking().Include(o => o.Items).ToListAsync()));
+        group.MapGet("/", async (IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetOrdersQuery())));
 
-        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, OrderDbContext db) =>
-            Results.Ok(await db.Orders.AsNoTracking()
-                .Include(o => o.Items)
-                .Where(o => o.TenantId == tenantId)
-                .ToListAsync()));
+        group.MapGet("/tenant/{tenantId:guid}", async (Guid tenantId, IMediator mediator) =>
+            Results.Ok(await mediator.Send(new GetOrdersByTenantQuery(tenantId))));
 
-        group.MapGet("/{id:guid}", async (Guid id, OrderDbContext db) =>
-            await db.Orders.AsNoTracking().Include(o => o.Items).FirstOrDefaultAsync(o => o.Id == id) is Order order
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator) =>
+            await mediator.Send(new GetOrderByIdQuery(id)) is Order order
                 ? Results.Ok(order)
                 : Results.NotFound());
 
-        group.MapPost("/", async (CreateOrderRequest request, OrderDbContext db, IPublishEndpoint publishEndpoint) =>
+        group.MapPost("/", async (CreateOrderRequest request, IMediator mediator) =>
         {
-            var order = new Order
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                CustomerId = request.CustomerId,
-                OrderNumber = $"ORD-{Guid.NewGuid().ToString()[..8].ToUpper()}",
-                Status = OrderStatus.Pending,
-                Subtotal = request.Items.Sum(i => i.UnitPrice * i.Quantity),
-                ShippingCost = request.ShippingCost,
-                TaxAmount = request.TaxAmount,
-                Total = request.Items.Sum(i => i.UnitPrice * i.Quantity) + request.ShippingCost + request.TaxAmount,
-                Currency = request.Currency,
-                ShippingAddress = request.ShippingAddress
-            };
-
-            foreach (var item in request.Items)
-            {
-                order.Items.Add(new OrderItem
-                {
-                    Id = Guid.NewGuid(),
-                    ProductId = item.ProductId,
-                    ProductVariantId = item.ProductVariantId,
-                    ProductName = item.ProductName,
-                    Sku = item.Sku,
-                    UnitPrice = item.UnitPrice,
-                    Quantity = item.Quantity,
-                    LineTotal = item.UnitPrice * item.Quantity
-                });
-            }
-
-            db.Orders.Add(order);
-            await db.SaveChangesAsync();
-
-            await publishEndpoint.Publish(new OrderPlacedIntegrationEvent
-            {
-                OrderId = order.Id,
-                TenantId = order.TenantId,
-                CustomerId = order.CustomerId,
-                TotalAmount = order.Total,
-                Items = order.Items.Select(i => new OrderItemDto(
+            var command = new CreateOrderCommand(
+                request.TenantId,
+                request.CustomerId,
+                request.Items.Select(i => new CreateOrderItemDto(
                     i.ProductId,
                     i.ProductVariantId,
                     i.ProductName,
                     i.Sku,
                     i.UnitPrice,
-                    i.Quantity)).ToList()
-            });
+                    i.Quantity)).ToList(),
+                request.ShippingCost,
+                request.TaxAmount,
+                request.Currency,
+                request.ShippingAddress);
 
+            var order = await mediator.Send(command);
             return Results.Created($"/api/orders/{order.Id}", order);
         });
 
-        group.MapPost("/{id:guid}/cancel", async (Guid id, OrderDbContext db, IPublishEndpoint publishEndpoint) =>
+        group.MapPost("/{id:guid}/cancel", async (Guid id, IMediator mediator) =>
         {
-            var order = await db.Orders.FindAsync(id);
-            if (order is null) return Results.NotFound();
-            if (order.Status == OrderStatus.Shipped || order.Status == OrderStatus.Delivered)
-                return Results.BadRequest("Cannot cancel shipped or delivered order");
+            var result = await mediator.Send(new CancelOrderCommand(id));
+            if (!result.Success && result.Order is null)
+                return Results.NotFound();
+            if (!result.Success)
+                return Results.BadRequest(result.Error);
 
-            order.Status = OrderStatus.Cancelled;
-            await db.SaveChangesAsync();
-
-            await publishEndpoint.Publish(new OrderCancelledIntegrationEvent
-            {
-                OrderId = order.Id,
-                TenantId = order.TenantId,
-                Reason = "Customer requested cancellation"
-            });
-
-            return Results.Ok(order);
+            return Results.Ok(result.Order);
         });
 
         return app;

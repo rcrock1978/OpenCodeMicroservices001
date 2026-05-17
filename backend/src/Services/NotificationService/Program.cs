@@ -52,6 +52,8 @@ public class Program
 
         builder.Services.AddOpenApi();
 
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
+
         builder.Services.AddStandardHealthChecks("NotificationService");
 
         builder.Services.AddOpenTelemetry()

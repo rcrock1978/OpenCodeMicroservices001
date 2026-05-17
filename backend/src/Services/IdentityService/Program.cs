@@ -1,6 +1,7 @@
 using IdentityService.Api.Endpoints;
 using IdentityService.Infrastructure.Persistence;
 using MassTransit;
+using MediatR;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,8 @@ public class Program
 
         builder.Services.AddDbContext<IdentityDbContext>(options =>
             options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
         builder.Services.AddStackExchangeRedisCache(options =>
             options.Configuration = builder.Configuration.GetConnectionString("Redis"));

@@ -1,6 +1,7 @@
 using CatalogService.Api.Endpoints;
 using CatalogService.Infrastructure.Persistence;
 using MassTransit;
+using MediatR;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Microsoft.EntityFrameworkCore;
@@ -47,6 +48,8 @@ public class Program
                 cfg.ConfigureEndpoints(context);
             });
         });
+
+        builder.Services.AddMediatR(cfg => cfg.RegisterServicesFromAssemblyContaining<Program>());
 
         builder.Services.AddOpenApi();
 

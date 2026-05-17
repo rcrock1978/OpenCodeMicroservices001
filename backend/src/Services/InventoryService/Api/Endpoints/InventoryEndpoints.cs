@@ -1,6 +1,6 @@
-using InventoryService.Domain.Entities;
-using InventoryService.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using InventoryService.Application.Commands;
+using InventoryService.Application.Queries;
+using MediatR;
 
 namespace InventoryService.Api.Endpoints;
 
@@ -16,85 +16,38 @@ public static class InventoryEndpoints
     {
         var group = app.MapGroup("/api/inventory").WithTags("Inventory").WithOpenApi();
 
-        group.MapGet("/", async (InventoryDbContext db) =>
-            Results.Ok(await db.StockItems.AsNoTracking().ToListAsync()));
+        group.MapGet("/", async (IMediator mediator, CancellationToken cancellationToken) =>
+            Results.Ok(await mediator.Send(new GetStockItemsQuery(), cancellationToken)));
 
-        group.MapGet("/{id:guid}", async (Guid id, InventoryDbContext db) =>
-            await db.StockItems.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id) is StockItem item
-                ? Results.Ok(item)
-                : Results.NotFound());
-
-        group.MapPost("/", async (CreateStockItemRequest request, InventoryDbContext db) =>
+        group.MapGet("/{id:guid}", async (Guid id, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var item = new StockItem
-            {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                ProductVariantId = request.ProductVariantId,
-                Sku = request.Sku,
-                QuantityAvailable = request.QuantityAvailable,
-                QuantityReserved = 0,
-                LowStockThreshold = request.LowStockThreshold
-            };
-            db.StockItems.Add(item);
-            await db.SaveChangesAsync();
+            var item = await mediator.Send(new GetStockItemByIdQuery(id), cancellationToken);
+            return item is not null ? Results.Ok(item) : Results.NotFound();
+        });
+
+        group.MapPost("/", async (CreateStockItemCommand command, IMediator mediator, CancellationToken cancellationToken) =>
+        {
+            var item = await mediator.Send(command, cancellationToken);
             return Results.Created($"/api/inventory/{item.Id}", item);
         });
 
-        group.MapPost("/reserve", async (ReserveStockRequest request, InventoryDbContext db) =>
+        group.MapPost("/reserve", async (ReserveStockCommand command, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var item = await db.StockItems.FirstOrDefaultAsync(s => s.Sku == request.Sku && s.TenantId == request.TenantId);
-            if (item is null) return Results.NotFound("Stock item not found");
-            if (item.QuantityAvailable - item.QuantityReserved < request.Quantity)
-                return Results.BadRequest("Insufficient stock");
-
-            item.QuantityReserved += request.Quantity;
-
-            var reservation = new StockReservation
+            var result = await mediator.Send(command, cancellationToken);
+            return result.Status switch
             {
-                Id = Guid.NewGuid(),
-                TenantId = request.TenantId,
-                OrderId = request.OrderId,
-                StockItemId = item.Id,
-                Quantity = request.Quantity,
-                Status = ReservationStatus.Reserved,
-                ExpiresAt = DateTime.UtcNow.AddMinutes(15)
+                ReserveStockStatus.StockItemNotFound => Results.NotFound("Stock item not found"),
+                ReserveStockStatus.InsufficientStock => Results.BadRequest("Insufficient stock"),
+                _ => Results.Ok(result.Reservation)
             };
-            db.StockReservations.Add(reservation);
-            await db.SaveChangesAsync();
-            return Results.Ok(reservation);
         });
 
-        group.MapPost("/release", async (ReleaseStockRequest request, InventoryDbContext db) =>
+        group.MapPost("/release", async (ReleaseStockCommand command, IMediator mediator, CancellationToken cancellationToken) =>
         {
-            var reservation = await db.StockReservations
-                .Include(r => r.StockItemId)
-                .FirstOrDefaultAsync(r => r.OrderId == request.OrderId && r.TenantId == request.TenantId && r.Status == ReservationStatus.Reserved);
-
-            if (reservation is null) return Results.NotFound("Reservation not found");
-
-            var item = await db.StockItems.FindAsync(reservation.StockItemId);
-            if (item is not null) item.QuantityReserved -= reservation.Quantity;
-            reservation.Status = ReservationStatus.Released;
-            await db.SaveChangesAsync();
-            return Results.NoContent();
+            var result = await mediator.Send(command, cancellationToken);
+            return result.Released ? Results.NoContent() : Results.NotFound("Reservation not found");
         });
 
         return app;
     }
 }
-
-/// <summary>
-/// Request model for creating a stock item.
-/// </summary>
-public record CreateStockItemRequest(Guid TenantId, Guid ProductVariantId, string Sku, int QuantityAvailable, int LowStockThreshold);
-
-/// <summary>
-/// Request model for reserving stock.
-/// </summary>
-public record ReserveStockRequest(Guid TenantId, string Sku, Guid OrderId, int Quantity);
-
-/// <summary>
-/// Request model for releasing stock.
-/// </summary>
-public record ReleaseStockRequest(Guid TenantId, Guid OrderId);
