@@ -1,15 +1,23 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { getTenants, getUsers } from "@/lib/api";
 
 const services = [
-  { name: "API Gateway", status: "Operational", url: "http://localhost:5050" },
+  { name: "API Gateway", status: "Operational", url: "http://localhost:5000" },
   { name: "Identity Service", status: "Operational", url: "http://localhost:5001" },
-  { name: "Billing Service", status: "Operational", url: "http://localhost:5002" },
-  { name: "Notification Service", status: "Operational", url: "http://localhost:5003" },
-  { name: "Core Service", status: "Operational", url: "http://localhost:5004" },
+  { name: "Catalog Service", status: "Operational", url: "http://localhost:5002" },
+  { name: "Inventory Service", status: "Operational", url: "http://localhost:5003" },
+  { name: "Order Service", status: "Operational", url: "http://localhost:5004" },
+  { name: "Customer Service", status: "Operational", url: "http://localhost:5005" },
+  { name: "Payment Service", status: "Operational", url: "http://localhost:5006" },
+  { name: "Notification Service", status: "Operational", url: "http://localhost:5007" },
 ];
 
-export default function Home() {
+export default async function Home() {
+  const [tenantsRes, usersRes] = await Promise.all([getTenants(), getUsers()]);
+  const tenantCount = tenantsRes.data?.length ?? 0;
+  const userCount = usersRes.data?.length ?? 0;
+
   return (
     <div className="min-h-full bg-muted/40">
       <header className="border-b bg-background">
@@ -30,7 +38,7 @@ export default function Home() {
               <CardDescription>Active tenant organizations</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">0</p>
+              <p className="text-3xl font-bold">{tenantCount}</p>
             </CardContent>
           </Card>
 
@@ -40,7 +48,7 @@ export default function Home() {
               <CardDescription>Registered user accounts</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">0</p>
+              <p className="text-3xl font-bold">{userCount}</p>
             </CardContent>
           </Card>
 
@@ -50,7 +58,7 @@ export default function Home() {
               <CardDescription>Active paid subscriptions</CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-3xl font-bold">0</p>
+              <p className="text-3xl font-bold">—</p>
             </CardContent>
           </Card>
         </div>

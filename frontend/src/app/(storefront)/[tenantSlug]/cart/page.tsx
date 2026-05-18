@@ -40,12 +40,12 @@ export default function CartPage({
         <div className="space-y-4 lg:col-span-2">
           {items.map((item) => (
             <div
-              key={item.productId}
+              key={`${item.productId}-${item.variantId ?? 'base'}`}
               className="flex gap-4 rounded-xl border bg-card p-4"
             >
               <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
                 <Image
-                  src={item.image}
+                  src={item.image ?? 'https://placehold.co/96x96/C8956C/FFFFFF?text=No+Image'}
                   alt={item.name}
                   fill
                   className="object-cover"
@@ -55,6 +55,9 @@ export default function CartPage({
               <div className="flex flex-1 flex-col justify-between">
                 <div>
                   <h3 className="font-medium">{item.name}</h3>
+                  {item.variantName && (
+                    <p className="text-sm text-muted-foreground">{item.variantName}</p>
+                  )}
                   <p className="text-sm text-muted-foreground">
                     ${item.price.toFixed(2)}
                   </p>
@@ -63,7 +66,7 @@ export default function CartPage({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() =>
-                        updateQuantity(item.productId, item.quantity - 1)
+                        updateQuantity(item.productId, item.quantity - 1, item.variantId)
                       }
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
                       aria-label="Decrease quantity"
@@ -75,7 +78,7 @@ export default function CartPage({
                     </span>
                     <button
                       onClick={() =>
-                        updateQuantity(item.productId, item.quantity + 1)
+                        updateQuantity(item.productId, item.quantity + 1, item.variantId)
                       }
                       className="inline-flex h-8 w-8 items-center justify-center rounded-md border hover:bg-muted"
                       aria-label="Increase quantity"
@@ -84,7 +87,7 @@ export default function CartPage({
                     </button>
                   </div>
                   <button
-                    onClick={() => removeItem(item.productId)}
+                    onClick={() => removeItem(item.productId, item.variantId)}
                     className="text-muted-foreground hover:text-destructive"
                     aria-label="Remove item"
                   >

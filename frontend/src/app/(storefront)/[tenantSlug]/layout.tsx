@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ShoppingCart } from 'lucide-react';
+import { getTenantBySubdomain } from '@/lib/api';
 
 export default async function StorefrontLayout({
   children,
@@ -9,6 +10,8 @@ export default async function StorefrontLayout({
   params: Promise<{ tenantSlug: string }>;
 }) {
   const { tenantSlug } = await params;
+  const tenantRes = await getTenantBySubdomain(tenantSlug);
+  const tenantName = tenantRes.data?.name ?? tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1);
 
   return (
     <div className="flex min-h-full flex-col">
@@ -18,7 +21,7 @@ export default async function StorefrontLayout({
             href={`/${tenantSlug}`}
             className="font-heading text-xl font-semibold tracking-tight"
           >
-            {tenantSlug.charAt(0).toUpperCase() + tenantSlug.slice(1)}
+            {tenantName}
           </Link>
           <nav className="flex items-center gap-6">
             <Link
@@ -39,7 +42,7 @@ export default async function StorefrontLayout({
       </header>
       <main className="flex-1">{children}</main>
       <footer className="border-t bg-background py-8 text-center text-sm text-muted-foreground">
-        <p>© 2026 SaaS Ecommerce. All rights reserved.</p>
+        <p>© 2026 {tenantName}. All rights reserved.</p>
       </footer>
     </div>
   );

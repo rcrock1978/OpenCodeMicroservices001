@@ -4,26 +4,31 @@ import { useState } from 'react';
 import { useCart } from '@/lib/store/cart';
 import { Button } from '@/components/ui/button';
 import { ShoppingCart, Check } from 'lucide-react';
+import type { Product, ProductVariant } from '@/lib/types';
 
 interface AddToCartButtonProps {
-  product: {
-    id: string;
-    name: string;
-    price: number;
-    image: string;
-  };
+  product: Product;
+  variant?: ProductVariant;
 }
 
-export function AddToCartButton({ product }: AddToCartButtonProps) {
+function getPlaceholderImage(id: string, name: string): string {
+  const encoded = encodeURIComponent(name.substring(0, 20));
+  return `https://placehold.co/400x500/C8956C/FFFFFF?text=${encoded}`;
+}
+
+export function AddToCartButton({ product, variant }: AddToCartButtonProps) {
   const [added, setAdded] = useState(false);
   const addItem = useCart((state) => state.addItem);
 
   const handleAdd = () => {
+    const price = variant?.priceOverride ?? product.basePrice;
     addItem({
       productId: product.id,
+      variantId: variant?.id,
       name: product.name,
-      price: product.price,
-      image: product.image,
+      variantName: variant?.name,
+      price,
+      image: getPlaceholderImage(product.id, product.name),
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);

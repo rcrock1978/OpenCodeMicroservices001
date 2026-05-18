@@ -1,19 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-
-export interface CartItem {
-  productId: string;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-}
+import type { CartItem } from '@/lib/types';
 
 interface CartState {
   items: CartItem[];
   addItem: (item: Omit<CartItem, 'quantity'>) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, quantity: number) => void;
+  removeItem: (productId: string, variantId?: string) => void;
+  updateQuantity: (productId: string, quantity: number, variantId?: string) => void;
   clearCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
@@ -24,11 +17,13 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       addItem: (item) => {
-        const existing = get().items.find((i) => i.productId === item.productId);
+        const existing = get().items.find(
+          (i) => i.productId === item.productId && i.variantId === item.variantId
+        );
         if (existing) {
           set({
             items: get().items.map((i) =>
-              i.productId === item.productId
+              i.productId === item.productId && i.variantId === item.variantId
                 ? { ...i, quantity: i.quantity + 1 }
                 : i
             ),
@@ -37,16 +32,26 @@ export const useCart = create<CartState>()(
           set({ items: [...get().items, { ...item, quantity: 1 }] });
         }
       },
-      removeItem: (productId) => {
-        set({ items: get().items.filter((i) => i.productId !== productId) });
+      removeItem: (productId, variantId) => {
+        set({
+          items: get().items.filter(
+            (i) => !(i.productId === productId && i.variantId === variantId)
+          ),
+        });
       },
-      updateQuantity: (productId, quantity) => {
+      updateQuantity: (productId, quantity, variantId) => {
         if (quantity <= 0) {
-          set({ items: get().items.filter((i) => i.productId !== productId) });
+          set({
+            items: get().items.filter(
+              (i) => !(i.productId === productId && i.variantId === variantId)
+            ),
+          });
         } else {
           set({
             items: get().items.map((i) =>
-              i.productId === productId ? { ...i, quantity } : i
+              i.productId === productId && i.variantId === variantId
+                ? { ...i, quantity }
+                : i
             ),
           });
         }
