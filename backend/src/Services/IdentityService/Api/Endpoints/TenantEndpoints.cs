@@ -24,6 +24,11 @@ public static class TenantEndpoints
                 ? Results.Ok(tenant)
                 : Results.NotFound());
 
+        group.MapGet("/by-subdomain/{subdomain}", async (string subdomain, IMediator mediator, CancellationToken ct) =>
+            await mediator.Send(new GetTenantBySubdomainQuery(subdomain), ct) is { } tenant
+                ? Results.Ok(tenant)
+                : Results.NotFound());
+
         group.MapPost("/", async (CreateTenantRequest request, IMediator mediator, CancellationToken ct) =>
         {
             var tenant = await mediator.Send(new CreateTenantCommand(request.Name, request.Subdomain, request.SubscriptionPlanId), ct);
